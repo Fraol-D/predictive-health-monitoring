@@ -1,0 +1,12 @@
+# Node modules
+node_modules/
+# Flutter build files
+build/
+.flutter-plugins
+.packages
+# React build files
+build/
+# Logs
+*.log
+# Environment files
+.env
