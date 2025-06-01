@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import PageLayout from '@/components/layout/page-layout';
+import { MessageSquare, Send } from 'lucide-react';
 
 // Inline SVG for Paper Airplane Icon
 const PaperAirplaneIconSVG = ({ className }: { className?: string }) => (
@@ -28,7 +30,7 @@ interface Message {
   timestamp: Date;
 }
 
-const AIChatPage = () => {
+const ChatPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
@@ -88,54 +90,66 @@ const AIChatPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] max-w-3xl mx-auto p-4">
-      <h1 className="text-3xl font-bold text-center mb-6 text-foreground">AI Health Assistant</h1>
-      
-      {/* Chat Messages Area */}
-      <div className="flex-grow overflow-y-auto mb-4 p-4 bg-card rounded-lg shadow space-y-4">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow ${
-                msg.sender === 'user'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground'
-              }`}
-            >
-              <p className="text-sm">{msg.text}</p>
-              <p className="text-xs text-right mt-1 opacity-75">
-                {msg.timestamp.toLocaleTimeString()}
-              </p>
-            </div>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
+    <PageLayout>
+      <div className="flex flex-col h-[calc(100vh-12rem)]">
+        {/* Chat Header */}
+        <header className="text-center mb-6">
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">
+            AI Health Assistant
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Chat with our AI to get personalized health insights and answers
+          </p>
+        </header>
 
-      {/* Input Area */}
-      <div className="flex items-center p-2 bg-card rounded-lg shadow">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-          placeholder="Ask about your health..."
-          className="flex-grow p-3 bg-transparent focus:outline-none text-foreground placeholder-muted-foreground rounded-md"
-        />
-        <button
-          onClick={handleSendMessage}
-          className="p-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg ml-2 transition-colors disabled:opacity-50"
-          disabled={!input.trim()}
-          aria-label="Send message"
-        >
-          <PaperAirplaneIconSVG className="h-6 w-6" />
-        </button>
+        {/* Chat Messages */}
+        <div className="flex-1 overflow-y-auto space-y-4 p-4 bg-card/50 backdrop-blur-sm rounded-xl">
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-[80%] p-4 rounded-xl ${
+                  message.sender === 'user'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-card/80 backdrop-blur-md'
+                }`}
+              >
+                <p className="text-sm">{message.text}</p>
+                <span className="text-xs opacity-70 mt-1 block">
+                  {message.timestamp.toLocaleTimeString()}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Chat Input */}
+        <div className="mt-4 p-4 bg-card/80 backdrop-blur-md rounded-xl">
+          <div className="flex items-center space-x-4">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                placeholder="Type your message..."
+                className="w-full px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <button
+              onClick={handleSendMessage}
+              className="p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              disabled={!input.trim()}
+            >
+              <Send className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+    </PageLayout>
   );
 };
 
-export default AIChatPage; 
+export default ChatPage; 
