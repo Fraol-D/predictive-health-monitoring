@@ -14,18 +14,24 @@ interface Recommendation {
   icon?: string; // Emoji or SVG path
 }
 
-const categoryStyles: Record<string, { bg: string; border: string; text: string; iconBg: string }> = {
-  Diet: { bg: 'bg-green-50 dark:bg-green-900/30', border: 'border-green-500', text: 'text-green-700 dark:text-green-300', iconBg: 'bg-green-100 dark:bg-green-800/50' },
-  Exercise: { bg: 'bg-blue-50 dark:bg-blue-900/30', border: 'border-blue-500', text: 'text-blue-700 dark:text-blue-300', iconBg: 'bg-blue-100 dark:bg-blue-800/50' },
-  Sleep: { bg: 'bg-indigo-50 dark:bg-indigo-900/30', border: 'border-indigo-500', text: 'text-indigo-700 dark:text-indigo-300', iconBg: 'bg-indigo-100 dark:bg-indigo-800/50' },
-  'Mental Health': { bg: 'bg-purple-50 dark:bg-purple-900/30', border: 'border-purple-500', text: 'text-purple-700 dark:text-purple-300', iconBg: 'bg-purple-100 dark:bg-purple-800/50' },
-  General: { bg: 'bg-slate-50 dark:bg-slate-700/30', border: 'border-slate-500', text: 'text-slate-700 dark:text-slate-300', iconBg: 'bg-slate-100 dark:bg-slate-600/50' },
+const categoryStyles: Record<string, {
+  gradientFrom: string;
+  gradientTo: string;
+  iconBg: string;
+  iconColor: string;
+  border: string;
+}> = {
+  Diet: { gradientFrom: 'from-green-500', gradientTo: 'to-teal-500', iconBg: 'bg-primary/10', iconColor: 'text-primary', border: 'border-primary/30' },
+  Exercise: { gradientFrom: 'from-blue-500', gradientTo: 'to-sky-500', iconBg: 'bg-accent/10', iconColor: 'text-accent', border: 'border-accent/30' },
+  Sleep: { gradientFrom: 'from-indigo-500', gradientTo: 'to-violet-500', iconBg: 'bg-primary/10', iconColor: 'text-primary', border: 'border-primary/30' },
+  'Mental Health': { gradientFrom: 'from-purple-500', gradientTo: 'to-pink-500', iconBg: 'bg-accent/10', iconColor: 'text-accent', border: 'border-accent/30' },
+  General: { gradientFrom: 'from-slate-500', gradientTo: 'to-gray-500', iconBg: 'bg-muted/20', iconColor: 'text-muted-foreground', border: 'border-muted/30' },
 };
 
-const priorityStyles: Record<string, string> = {
-  High: 'border-l-4 border-red-500',
-  Medium: 'border-l-4 border-yellow-500',
-  Low: 'border-l-4 border-green-500',
+const priorityStyles: Record<string, { badge: string; border: string }> = {
+  High: { badge: 'bg-red-500/20 text-red-500 border-red-500/50', border: 'border-l-4 border-red-500' },
+  Medium: { badge: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/50', border: 'border-l-4 border-yellow-500' },
+  Low: { badge: 'bg-green-500/20 text-green-500 border-green-500/50', border: 'border-l-4 border-green-500' },
 };
 
 const RecommendationsContent = () => {
@@ -112,40 +118,48 @@ const RecommendationsContent = () => {
   }, {} as Record<string, Recommendation[]>);
 
   return (
-    <div className="space-y-8">
-      {Object.entries(groupedRecommendations).map(([category, recs]) => (
-        <section key={category} className="p-0.5"> {/* Minimal padding to allow card shadow */}
-          <h2 className={`text-2xl font-semibold mb-5 text-transparent bg-clip-text bg-gradient-to-r ${categoryStyles[category]?.text.includes('green') ? 'from-green-500 to-teal-500' : categoryStyles[category]?.text.includes('blue') ? 'from-blue-500 to-sky-500' : categoryStyles[category]?.text.includes('indigo') ? 'from-indigo-500 to-violet-500' : categoryStyles[category]?.text.includes('purple') ? 'from-purple-500 to-pink-500' : 'from-slate-500 to-gray-500'}`}>
-            {category} Recommendations
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {recs.map((rec) => {
-              const catStyle = categoryStyles[rec.category] || categoryStyles.General;
-              return (
-                <div 
-                  key={rec.id}
-                  className={`rounded-xl shadow-lg overflow-hidden flex flex-col h-full ${catStyle.bg} ${priorityStyles[rec.priority] || 'border-l-4 border-slate-300'} border border-transparent hover:border-current transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-2xl`}
-                >
-                  <div className={`p-5 flex-grow ${catStyle.text}`}>
-                    <div className="flex items-start mb-3">
-                      {rec.icon && (
-                        <div className={`mr-3 p-2 rounded-full ${catStyle.iconBg}`}>
-                           <span className="text-2xl">{rec.icon}</span>
+    <div className="space-y-10">
+      {Object.entries(groupedRecommendations).map(([category, recs]) => {
+        const catTheme = categoryStyles[category] || categoryStyles.General;
+        return (
+          <section key={category} className="p-0.5">
+            <h2 className={`text-3xl font-semibold mb-6 text-transparent bg-clip-text bg-gradient-to-r ${catTheme.gradientFrom} ${catTheme.gradientTo}`}>
+              {category} Recommendations
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {recs.map((rec) => {
+                const currentPriorityStyle = priorityStyles[rec.priority] || { badge: 'bg-slate-500/20 text-slate-500 border-slate-500/50', border: 'border-l-4 border-slate-300' };
+                const currentCategoryStyle = categoryStyles[rec.category] || categoryStyles.General;
+                return (
+                  <div
+                    key={rec.id}
+                    className={`bg-card/70 dark:bg-card/60 backdrop-blur-md rounded-xl shadow-xl overflow-hidden flex flex-col h-full ${currentPriorityStyle.border} hover:shadow-primary/20 transition-all duration-300 ease-in-out transform hover:-translate-y-1`}
+                  >
+                    <div className={`p-5 flex-grow`}>
+                      <div className="flex items-start mb-4">
+                        {rec.icon && (
+                          <div className={`mr-4 p-2.5 rounded-full ${currentCategoryStyle.iconBg}`}>
+                             <span className={`text-2xl ${currentCategoryStyle.iconColor}`}>{rec.icon}</span>
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <h3 className="text-xl font-semibold text-foreground mb-1">{rec.title}</h3>
+                          <span
+                            className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${currentPriorityStyle.badge} border`}
+                          >
+                            {rec.priority} Priority
+                          </span>
                         </div>
-                      )}
-                      <h3 className="text-xl font-semibold flex-1">{rec.title}</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{rec.advice}</p>
                     </div>
-                    <p className="text-sm text-foreground/80 dark:text-foreground/70 leading-relaxed">{rec.advice}</p>
                   </div>
-                  <div className={`px-5 py-3 text-xs font-medium ${catStyle.text} opacity-80 border-t ${catStyle.border} border-opacity-30`}>
-                    Priority: {rec.priority}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      ))}
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 };
@@ -153,19 +167,7 @@ const RecommendationsContent = () => {
 const RecommendationsView = () => {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center p-4 md:p-8">
-      <nav className="w-full max-w-6xl mb-8 p-3 bg-card/80 backdrop-blur-md rounded-xl shadow-lg">
-        <div className="container mx-auto flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">
-            Predictive Health
-          </Link>
-          <div className="flex items-center space-x-3">
-            {/* Consider adding Profile link/icon here */}
-            <ThemeToggleButton />
-          </div>
-        </div>
-      </nav>
-
-      <main className="w-full max-w-6xl">
+      <main className="w-full max-w-6xl pt-16">
         <header className="mb-8 md:mb-10 text-center">
           <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent pb-2">
             Your Health Recommendations

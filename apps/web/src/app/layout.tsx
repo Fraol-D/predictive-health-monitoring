@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+// Fonts are now handled by AppBody if they affect className there, or keep here if only for <head>
+// For simplicity, let's assume AppBody handles its own font classNames on <body>
+// import { Geist, Geist_Mono } from "next/font/google"; 
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
+import { AppBody } from "./app-body"; // Import the new client component
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+// Font definitions for <head> links or global fallbacks can remain if needed, but AppBody handles body classes.
+// const geistSans = Geist({
+//   variable: "--font-geist-sans",
+//   subsets: ["latin"],
+// });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// const geistMono = Geist_Mono({
+//   variable: "--font-geist-mono",
+//   subsets: ["latin"],
+// });
 
 export const metadata: Metadata = {
-  title: "Predictive Health Monitoring",
-  description: "Assess your chronic disease risks and get personalized health insights",
+  title: "Health Monitor",
+  description: "Predictive health monitoring system",
   keywords: ["health", "monitoring", "predictive", "chronic disease", "risk assessment"],
 };
 
@@ -26,20 +29,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head />
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem={false}
-          storageKey="phm-app-theme"
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
-      </body>
+      {/* AppBody will now render the <body> tag and its contents */}
+      <AppBody>{children}</AppBody>
     </html>
   );
 }
