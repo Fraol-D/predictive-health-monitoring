@@ -25,11 +25,14 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # Environment
+# Do not commit secrets and environment-specific configuration.
 .env
+.env.*
+!.env.example
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+
+# local pnpm store
+/pnpm-store
 
 # IDE
 .idea/

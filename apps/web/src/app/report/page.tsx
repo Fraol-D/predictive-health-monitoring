@@ -1,180 +1,104 @@
 'use client';
 
 import React from 'react';
-import { AssessmentData } from '@shared/types/assessment';
+import Link from 'next/link';
+import { Clock, FileText, ChevronRight } from 'lucide-react';
+import PageLayout from '@/components/layout/page-layout';
 
-const RiskScoreCard: React.FC<{
-  title: string;
-  score: number;
-  description: string;
-}> = ({ title, score, description }) => {
-  const getScoreColor = (score: number) => {
-    if (score >= 70) return 'text-red-500';
-    if (score >= 40) return 'text-yellow-500';
-    return 'text-green-500';
-  };
+// Mock data for the assessment history list
+const mockAssessmentHistory = [
+  {
+    id: 'assessment-id-1',
+    timestamp: '2023-10-28T10:00:00Z',
+    overallRisk: {
+      score: 65,
+      level: 'Medium',
+    },
+  },
+  {
+    id: 'assessment-id-2',
+    timestamp: '2023-09-15T14:30:00Z',
+    overallRisk: {
+      score: 30,
+      level: 'Low',
+    },
+  },
+  {
+    id: 'assessment-id-3',
+    timestamp: '2023-07-02T09:00:00Z',
+    overallRisk: {
+      score: 80,
+      level: 'High',
+    },
+  },
+];
 
-  return (
-    <div className="bg-card p-6 rounded-lg shadow-lg">
-      <h3 className="text-lg font-semibold mb-2">{title}</h3>
-      <div className={`text-3xl font-bold mb-2 ${getScoreColor(score)}`}>
-        {score}%
-      </div>
-      <p className="text-muted-foreground">{description}</p>
-    </div>
-  );
+const getRiskStyling = (level: string) => {
+  switch (level) {
+    case 'High':
+    case 'Very High':
+      return 'text-red-400 border-red-400/50';
+    case 'Medium':
+      return 'text-yellow-400 border-yellow-400/50';
+    case 'Low':
+    default:
+      return 'text-green-400 border-green-400/50';
+  }
 };
 
-const RecommendationCard: React.FC<{
-  title: string;
-  description: string;
-  priority: 'high' | 'medium' | 'low';
-}> = ({ title, description, priority }) => {
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-      case 'low':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
-    }
-  };
-
+export default function ReportHistoryPage() {
   return (
-    <div className="bg-card p-6 rounded-lg shadow-lg">
-      <div className="flex justify-between items-start mb-4">
-        <h3 className="text-lg font-semibold">{title}</h3>
-        <span
-          className={`px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(
-            priority
-          )}`}
-        >
-          {priority.charAt(0).toUpperCase() + priority.slice(1)} Priority
-        </span>
-      </div>
-      <p className="text-muted-foreground">{description}</p>
-    </div>
-  );
-};
+    <PageLayout>
+      <header className="w-full mb-12">
+        <h2 className="text-4xl font-bold mb-2">Assessment History</h2>
+        <p className="text-xl text-muted-foreground">
+          Review your past health assessments and track your progress.
+        </p>
+      </header>
 
-export default function ReportPage() {
-  // Mock data - replace with actual API call
-  const assessmentData: AssessmentData = {
-    id: '1',
-    userId: 'user1',
-    timestamp: new Date().toISOString(),
-    diet: {
-      fruitVegFrequency: 'daily',
-      processedFoodFrequency: 'multiple_times_week',
-      waterIntakeLiters: 2,
-      dietaryRestrictions: [],
-      notes: '',
-    },
-    lifestyle: {
-      physicalActivityFrequency: 'multiple_times_week',
-      physicalActivityDurationMinutes: 30,
-      sleepHoursPerNight: 7,
-      stressLevel: 'moderate',
-      smokingStatus: 'never',
-      alcoholConsumption: 'occasional',
-      notes: '',
-    },
-    medicalHistory: {
-      familyHistory: {
-        diabetes: false,
-        heartDisease: false,
-        hypertension: false,
-        cancer: false,
-      },
-      existingConditions: [],
-      medications: [],
-      allergies: [],
-      lastCheckup: new Date().toISOString().split('T')[0],
-    },
-    vitalSigns: {
-      height: 170,
-      weight: 70,
-      bloodPressure: {
-        systolic: 120,
-        diastolic: 80,
-      },
-      bloodSugar: 100,
-      heartRate: 72,
-    },
-    riskScores: {
-      diabetes: 25,
-      heartDisease: 15,
-      hypertension: 30,
-      overall: 20,
-    },
-    recommendations: [
-      {
-        title: 'Increase Physical Activity',
-        description: 'Aim for at least 30 minutes of moderate exercise daily.',
-        priority: 'high',
-      },
-      {
-        title: 'Improve Sleep Habits',
-        description: 'Maintain a consistent sleep schedule and aim for 7-8 hours of sleep.',
-        priority: 'medium',
-      },
-      {
-        title: 'Reduce Processed Food Intake',
-        description: 'Limit consumption of processed foods and increase whole food intake.',
-        priority: 'medium',
-      },
-    ],
-    status: 'completed',
-  };
-
-  return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Assessment Report</h1>
-        <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
-          Download Report
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <RiskScoreCard
-          title="Diabetes Risk"
-          score={assessmentData.riskScores.diabetes}
-          description="Based on your current health indicators"
-        />
-        <RiskScoreCard
-          title="Heart Disease Risk"
-          score={assessmentData.riskScores.heartDisease}
-          description="Based on your current health indicators"
-        />
-        <RiskScoreCard
-          title="Hypertension Risk"
-          score={assessmentData.riskScores.hypertension}
-          description="Based on your current health indicators"
-        />
-        <RiskScoreCard
-          title="Overall Risk"
-          score={assessmentData.riskScores.overall}
-          description="Combined risk assessment"
-        />
-      </div>
-
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Recommendations</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {assessmentData.recommendations.map((recommendation, index) => (
-            <RecommendationCard
-              key={index}
-              title={recommendation.title}
-              description={recommendation.description}
-              priority={recommendation.priority}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
+      <section className="w-full">
+        {mockAssessmentHistory.length > 0 ? (
+          <div className="space-y-6">
+            {mockAssessmentHistory.map((assessment) => (
+              <Link href={`/report/${assessment.id}`} key={assessment.id}>
+                <div className="bg-card/70 backdrop-blur-md p-6 rounded-xl shadow-lg hover:shadow-primary/20 transition-all duration-300 transform hover:-translate-y-1 border border-transparent hover:border-primary/30 cursor-pointer group">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <div className="flex items-center mb-4 sm:mb-0">
+                      <div className="p-3 bg-card rounded-lg mr-4">
+                        <FileText className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold">Assessment Report</h3>
+                        <div className="flex items-center text-sm text-muted-foreground mt-1">
+                          <Clock className="w-4 h-4 mr-2" />
+                          <span>{new Date(assessment.timestamp).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                       <div className={`text-right ${getRiskStyling(assessment.overallRisk.level)}`}>
+                          <p className="text-2xl font-bold">{assessment.overallRisk.score}%</p>
+                          <p className="text-sm font-semibold">{assessment.overallRisk.level} Risk</p>
+                       </div>
+                       <ChevronRight className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16 bg-card/50 rounded-xl">
+            <h3 className="text-2xl font-semibold mb-4">No History Found</h3>
+            <p className="text-muted-foreground mb-6">You have not completed any assessments yet.</p>
+            <Link href="/assessment">
+              <button className="px-6 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold shadow-lg transform hover:scale-105 transition-transform">
+                Start Your First Assessment
+              </button>
+            </Link>
+          </div>
+        )}
+      </section>
+    </PageLayout>
   );
 } 

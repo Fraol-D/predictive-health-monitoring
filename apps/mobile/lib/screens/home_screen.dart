@@ -3,16 +3,68 @@ import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/theme_provider.dart';
 import 'assessment/assessment_screen.dart';
-import '../theme/app_theme.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  Widget _buildThemeToggleButton(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    // Listen to themeProvider.themeMode to rebuild the icon when the mode changes
+    final currentMode = Provider.of<ThemeProvider>(context).themeMode;
+
+    IconData icon;
+    String tooltip;
+
+    switch (currentMode) {
+      case ThemeMode.light:
+        icon = Icons.light_mode;
+        tooltip = 'Switch to Dark Mode';
+        break;
+      case ThemeMode.dark:
+        icon = Icons.dark_mode;
+        tooltip = 'Switch to System Default';
+        break;
+      case ThemeMode.system:
+      default:
+        icon = Icons.brightness_auto;
+        tooltip = 'Switch to Light Mode';
+        break;
+    }
+
+    return IconButton(
+      icon: Icon(icon),
+      tooltip: tooltip,
+      onPressed: () {
+        themeProvider.cycleThemePreference();
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Predictive Health',
+          style: TextStyle( // Ensuring AppBar title uses the theme's foreground color explicitly if needed
+            color: theme.colorScheme.onBackground, // Or theme.appBarTheme.titleTextStyle?.color
+            fontWeight: theme.appBarTheme.titleTextStyle?.fontWeight ?? FontWeight.w600,
+            fontSize: theme.appBarTheme.titleTextStyle?.fontSize ?? 20,
+          )
+        ),
+        actions: [
+          _buildThemeToggleButton(context),
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            tooltip: 'Profile',
+            onPressed: () {
+              // TODO: Navigate to profile
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -20,38 +72,13 @@ class HomeScreen extends StatelessWidget {
         child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Predictive Health',
-                      style: theme.textTheme.displaySmall?.copyWith(
-                        foreground: Paint()
-                          ..shader = LinearGradient(
-                            colors: [
-                              AppTheme.primaryPurple,
-                              AppTheme.primaryPink,
-                            ],
-                          ).createShader(const Rect.fromLTWH(0.0, 0.0, 200.0, 70.0)),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.person_outline),
-                      onPressed: () {
-                        // TODO: Navigate to profile
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
                 // Hero Section
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
+                    color: theme.colorScheme.surface.withOpacity(0.85), // Slight transparency for glassmorphism
+                    borderRadius: BorderRadius.circular(16), // Consistent with AppTheme._borderRadius
+                    border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)), // Subtle border
                     boxShadow: [
                       BoxShadow(
                         color: theme.shadowColor.withOpacity(0.1),
@@ -84,14 +111,14 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-            ),
+                ),
                 const SizedBox(height: 32),
 
                 // Recent Assessments
-            Text(
+                Text(
                   'Recent Assessments',
                   style: theme.textTheme.displaySmall,
-            ),
+                ),
                 const SizedBox(height: 16),
                 GridView.count(
                   shrinkWrap: true,
@@ -100,19 +127,19 @@ class HomeScreen extends StatelessWidget {
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
                   childAspectRatio: 0.8,
-              children: [
+                  children: [
                     _buildAssessmentCard(
                       context,
                       'Diabetes Risk',
                       'Medium Risk (65%)',
-                      AppTheme.warning,
+                      theme.colorScheme.error,
                       '2 days ago',
                     ),
                     _buildAssessmentCard(
-                    context,
+                      context,
                       'Heart Disease Risk',
                       'Low Risk (30%)',
-                      AppTheme.success,
+                      theme.colorScheme.tertiary, // Updated to use the new success color from ColorScheme
                       '1 week ago',
                     ),
                   ],
@@ -137,26 +164,26 @@ class HomeScreen extends StatelessWidget {
                       context,
                       'View Full History',
                       'Track your progress over time',
-                      AppTheme.accentIndigo,
+                      theme.colorScheme.primaryContainer,
                       Icons.history,
                     ),
                     _buildExploreCard(
                       context,
                       'Get Recommendations',
                       'Personalized advice for a healthier you',
-                      AppTheme.accentTeal,
+                      theme.colorScheme.secondaryContainer,
                       Icons.health_and_safety,
                     ),
                     _buildExploreCard(
-                    context,
+                      context,
                       'AI Health Assistant',
                       'Chat directly with our AI',
-                      AppTheme.accentGreen,
+                      theme.colorScheme.tertiaryContainer,
                       Icons.chat,
-              ),
+                    ),
                   ],
-            ),
-          ],
+                ),
+              ],
             ),
           ),
         ),
@@ -176,8 +203,9 @@ class HomeScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: theme.colorScheme.surface.withOpacity(0.85), // Slight transparency
+        borderRadius: BorderRadius.circular(16), // Consistent with AppTheme._borderRadius
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)), // Subtle border
         boxShadow: [
           BoxShadow(
             color: theme.shadowColor.withOpacity(0.1),
@@ -235,8 +263,9 @@ class HomeScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: theme.colorScheme.surface.withOpacity(0.85), // Slight transparency
+        borderRadius: BorderRadius.circular(16), // Consistent with AppTheme._borderRadius
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)), // Subtle border
         boxShadow: [
           BoxShadow(
             color: theme.shadowColor.withOpacity(0.1),

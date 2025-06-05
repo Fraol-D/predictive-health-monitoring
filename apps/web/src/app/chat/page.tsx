@@ -2,65 +2,55 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import PageLayout from '@/components/layout/page-layout';
-import { MessageSquare, Send } from 'lucide-react';
-
-// Inline SVG for Paper Airplane Icon
-const PaperAirplaneIconSVG = ({ className }: { className?: string }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    fill="none" 
-    viewBox="0 0 24 24" 
-    strokeWidth={1.5} 
-    stroke="currentColor" 
-    className={className}
-  >
-    <path 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" 
-    />
-  </svg>
-);
+import { Bot, User, Send, Loader2 } from 'lucide-react';
 
 // Define a message type
 interface Message {
   id: string;
   text: string;
   sender: 'user' | 'ai';
-  timestamp: Date;
 }
 
 const ChatPage = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    { id: 'init-1', text: "Hello! I'm your AI Health Assistant. How can I help you today?", sender: 'ai' }
+  ]);
   const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(scrollToBottom, [messages]);
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isLoading]);
 
   const handleSendMessage = async () => {
-    if (input.trim() === '') return;
+    if (input.trim() === '' || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString() + '-user',
       text: input,
       sender: 'user',
-      timestamp: new Date(),
     };
+    
     setMessages((prevMessages) => [...prevMessages, userMessage]);
     const currentInput = input;
     setInput('');
+    setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: currentInput }),
+        body: JSON.stringify({ 
+          message: currentInput,
+          history: messages 
+        }),
       });
 
       if (!response.ok) {
@@ -71,81 +61,91 @@ const ChatPage = () => {
 
       const aiResponse: Message = {
         id: Date.now().toString() + '-ai',
-        text: data.reply || 'Error: No reply from AI',
+        text: data.reply || 'Sorry, I encountered an issue. Please try again.',
         sender: 'ai',
-        timestamp: data.timestamp ? new Date(data.timestamp) : new Date(),
       };
       setMessages((prevMessages) => [...prevMessages, aiResponse]);
 
     } catch (error) {
-      console.error("Failed to send message to backend:", error);
+      console.error("Failed to send message:", error);
       const errorResponse: Message = {
         id: Date.now().toString() + '-ai-error',
-        text: 'Sorry, I couldn\'t connect to the AI. Please try again.',
+        text: 'Sorry, I couldn\'t connect to the AI. Please check the server and try again.',
         sender: 'ai',
-        timestamp: new Date(),
       };
       setMessages((prevMessages) => [...prevMessages, errorResponse]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <PageLayout>
-      <div className="flex flex-col h-[calc(100vh-12rem)]">
-        {/* Chat Header */}
-        <header className="text-center mb-6">
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">
-            AI Health Assistant
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Chat with our AI to get personalized health insights and answers
-          </p>
-        </header>
-
+      <div className="flex flex-col h-[calc(100vh-12rem)] max-w-4xl mx-auto w-full">
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto space-y-4 p-4 bg-card/50 backdrop-blur-sm rounded-xl">
+        <div className="flex-1 overflow-y-auto space-y-6 p-6 bg-card/50 backdrop-blur-sm rounded-t-xl border border-border/20">
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex items-start gap-4 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div
-                className={`max-w-[80%] p-4 rounded-xl ${
+              {message.sender === 'ai' && (
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
+                  <Bot className="w-6 h-6" />
+                </div>
+              )}
+              <div className={`max-w-[80%] p-4 rounded-xl shadow-md ${
                   message.sender === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-card/80 backdrop-blur-md'
+                    ? 'bg-primary/90 text-primary-foreground rounded-br-none'
+                    : 'bg-card/80 backdrop-blur-md text-foreground rounded-bl-none'
                 }`}
               >
-                <p className="text-sm">{message.text}</p>
-                <span className="text-xs opacity-70 mt-1 block">
-                  {message.timestamp.toLocaleTimeString()}
-                </span>
+                <p className="text-sm leading-relaxed">{message.text}</p>
               </div>
+               {message.sender === 'user' && (
+                <div className="w-10 h-10 rounded-full bg-card/80 flex items-center justify-center text-muted-foreground flex-shrink-0">
+                  <User className="w-6 h-6" />
+                </div>
+              )}
             </div>
           ))}
+          {isLoading && (
+            <div className="flex items-start gap-4 justify-start">
+               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
+                  <Bot className="w-6 h-6" />
+                </div>
+              <div className="max-w-[80%] p-4 rounded-xl shadow-md bg-card/80 backdrop-blur-md text-foreground rounded-bl-none flex items-center space-x-2">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span className="text-sm text-muted-foreground">AI is thinking...</span>
+              </div>
+            </div>
+          )}
+           <div ref={messagesEndRef} />
         </div>
 
         {/* Chat Input */}
-        <div className="mt-4 p-4 bg-card/80 backdrop-blur-md rounded-xl">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1 relative">
+        <div className="p-4 bg-card/80 backdrop-blur-md rounded-b-xl border-t-0 border border-border/20">
+          <div className="flex items-center gap-4">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder="Type your message..."
-                className="w-full px-4 py-2 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary/20"
+                placeholder="Ask the AI Health Assistant..."
+                className="w-full px-4 py-3 rounded-lg bg-background/70 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50 text-base"
+                disabled={isLoading}
               />
-            </div>
             <button
               onClick={handleSendMessage}
-              className="p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-              disabled={!input.trim()}
+              className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed flex items-center justify-center"
+              disabled={!input.trim() || isLoading}
             >
-              <Send className="w-5 h-5" />
+              <Send className="w-6 h-6" />
             </button>
           </div>
+           <p className="text-xs text-muted-foreground mt-2 text-center">
+              AI assistant is for informational purposes only. Always consult a healthcare professional for medical advice.
+            </p>
         </div>
       </div>
     </PageLayout>
