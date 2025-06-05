@@ -124,20 +124,20 @@ const RecommendationsContent = () => {
         return (
           <section key={category} className="p-0.5">
             <h2 className={`text-3xl font-semibold mb-6 text-transparent bg-clip-text bg-gradient-to-r ${catTheme.gradientFrom} ${catTheme.gradientTo}`}>
-              {category} Recommendations
-            </h2>
+            {category} Recommendations
+          </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recs.map((rec) => {
+            {recs.map((rec) => {
                 const currentPriorityStyle = priorityStyles[rec.priority] || { badge: 'bg-slate-500/20 text-slate-500 border-slate-500/50', border: 'border-l-4 border-slate-300' };
                 const currentCategoryStyle = categoryStyles[rec.category] || categoryStyles.General;
-                return (
-                  <div
-                    key={rec.id}
+              return (
+                <div 
+                  key={rec.id}
                     className={`bg-card/70 dark:bg-card/60 backdrop-blur-md rounded-xl shadow-xl overflow-hidden flex flex-col h-full ${currentPriorityStyle.border} hover:shadow-primary/20 transition-all duration-300 ease-in-out transform hover:-translate-y-1`}
-                  >
+                >
                     <div className={`p-5 flex-grow`}>
                       <div className="flex items-start mb-4">
-                        {rec.icon && (
+                      {rec.icon && (
                           <div className={`mr-4 p-2.5 rounded-full ${currentCategoryStyle.iconBg}`}>
                              <span className={`text-2xl ${currentCategoryStyle.iconColor}`}>{rec.icon}</span>
                           </div>
@@ -150,14 +150,14 @@ const RecommendationsContent = () => {
                             {rec.priority} Priority
                           </span>
                         </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{rec.advice}</p>
                     </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{rec.advice}</p>
                   </div>
-                );
-              })}
-            </div>
-          </section>
+                </div>
+              );
+            })}
+          </div>
+        </section>
         );
       })}
     </div>
