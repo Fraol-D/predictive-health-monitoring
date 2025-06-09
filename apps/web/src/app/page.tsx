@@ -1,6 +1,9 @@
+'use client'; // Required for the withAuth HOC
+
 import React from 'react';
 import Link from 'next/link';
 import PageLayout from '@/components/layout/page-layout';
+import { withAuth } from '@/components/with-auth'; // Import the HOC
 
 const HomePage = () => {
   return (
@@ -91,4 +94,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default withAuth(HomePage); // Wrap the component with the HOC

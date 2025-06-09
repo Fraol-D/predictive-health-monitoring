@@ -111,14 +111,14 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                ),
+            ),
                 const SizedBox(height: 32),
 
                 // Recent Assessments
-                Text(
+            Text(
                   'Recent Assessments',
                   style: theme.textTheme.displaySmall,
-                ),
+            ),
                 const SizedBox(height: 16),
                 GridView.count(
                   shrinkWrap: true,
@@ -127,7 +127,7 @@ class HomeScreen extends StatelessWidget {
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
                   childAspectRatio: 0.8,
-                  children: [
+              children: [
                     _buildAssessmentCard(
                       context,
                       'Diabetes Risk',
@@ -136,7 +136,7 @@ class HomeScreen extends StatelessWidget {
                       '2 days ago',
                     ),
                     _buildAssessmentCard(
-                      context,
+                    context,
                       'Heart Disease Risk',
                       'Low Risk (30%)',
                       theme.colorScheme.tertiary, // Updated to use the new success color from ColorScheme
@@ -175,15 +175,15 @@ class HomeScreen extends StatelessWidget {
                       Icons.health_and_safety,
                     ),
                     _buildExploreCard(
-                      context,
+                    context,
                       'AI Health Assistant',
                       'Chat directly with our AI',
                       theme.colorScheme.tertiaryContainer,
                       Icons.chat,
-                    ),
+              ),
                   ],
-                ),
-              ],
+            ),
+          ],
             ),
           ),
         ),

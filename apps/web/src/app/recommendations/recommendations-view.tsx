@@ -3,7 +3,7 @@
 import React from 'react';
 import PageLayout from '@/components/layout/page-layout';
 import Link from 'next/link';
-import { Heart, Brain, Apple, Dumbbell } from 'lucide-react';
+import { Heart, Brain, Apple, Dumbbell, LucideIcon } from 'lucide-react';
 
 interface Recommendation {
   id: string;
@@ -23,11 +23,11 @@ const mockRecommendations: Recommendation[] = [
 ];
 
 
-const categoryStyles: Record<string, { icon: React.ReactNode; color: string; }> = {
-  Diet: { icon: <Apple />, color: 'text-green-400' },
-  Exercise: { icon: <Dumbbell />, color: 'text-sky-400' },
-  'Mental Health': { icon: <Brain />, color: 'text-purple-400' },
-  General: { icon: <Heart />, color: 'text-pink-400' },
+const categoryStyles: Record<string, { icon: LucideIcon; color: string; }> = {
+  Diet: { icon: Apple, color: 'text-green-400' },
+  Exercise: { icon: Dumbbell, color: 'text-sky-400' },
+  'Mental Health': { icon: Brain, color: 'text-purple-400' },
+  General: { icon: Heart, color: 'text-pink-400' },
 };
 
 const priorityStyles: Record<string, string> = {
@@ -39,28 +39,29 @@ const priorityStyles: Record<string, string> = {
 const RecommendationCard = ({ rec }: { rec: Recommendation }) => {
     const categoryStyle = categoryStyles[rec.category] || categoryStyles.General;
     const priorityStyle = priorityStyles[rec.priority];
+    const IconComponent = categoryStyle.icon;
 
     return (
-        <div className={`bg-card/70 backdrop-blur-md rounded-xl shadow-lg flex flex-col h-full border-l-4 ${priorityStyle} transition-all duration-300 transform hover:-translate-y-1 hover:shadow-primary/20`}>
+        <div className={`bg-card/80 backdrop-blur-md rounded-xl shadow-lg flex flex-col h-full border-l-4 ${priorityStyle} transition-all duration-300 transform hover:-translate-y-1 hover:shadow-primary/20`}>
             <div className="p-6 flex-grow">
                 <div className="flex items-center mb-4">
-                    <div className={`mr-4 p-2 rounded-full bg-card ${categoryStyle.color}`}>
-                        {categoryStyle.icon}
-                    </div>
+                    <div className={`mr-4 p-2.5 rounded-full bg-card ${categoryStyle.color}`}>
+                        <IconComponent size={24} className="text-current" />
+      </div>
                     <div>
                         <h3 className="text-xl font-semibold text-foreground">{rec.title}</h3>
                         <p className={`text-sm font-bold ${categoryStyle.color}`}>{rec.category}</p>
-                    </div>
-                </div>
-                <p className="text-muted-foreground leading-relaxed">{rec.advice}</p>
-            </div>
-            <div className="bg-card/50 px-6 py-3 border-t border-border/20 text-right">
-                 <span className={`px-3 py-1 text-xs font-semibold rounded-full`}>
-                    {rec.priority} Priority
-                </span>
-            </div>
         </div>
-    );
+      </div>
+                <p className="text-muted-foreground leading-relaxed">{rec.advice}</p>
+      </div>
+            <div className="bg-card/50 px-6 py-3 border-t border-border/20 text-right">
+                 <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${priorityStyle.replace('border-', 'bg-').replace('/50', '/20')} ${priorityStyle.replace('border', 'text')}`}>
+                            {rec.priority} Priority
+                          </span>
+                  </div>
+                </div>
+              );
 }
 
 const RecommendationsView = () => {
@@ -80,7 +81,7 @@ const RecommendationsView = () => {
                 ))}
             </div>
         ) : (
-             <div className="text-center py-16 bg-card/50 rounded-xl">
+             <div className="text-center py-16 bg-card/80 backdrop-blur-md rounded-xl shadow-lg border-2 border-dashed border-border">
                 <h3 className="text-2xl font-semibold mb-4">No Recommendations Available</h3>
                 <p className="text-muted-foreground mb-6">Complete an assessment to get personalized health advice.</p>
                 <Link href="/assessment">
@@ -88,7 +89,7 @@ const RecommendationsView = () => {
                     Start an Assessment
                   </button>
                 </Link>
-            </div>
+    </div>
         )}
     </PageLayout>
   );

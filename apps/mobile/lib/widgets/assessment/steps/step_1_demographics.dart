@@ -24,8 +24,8 @@ class Step1Demographics extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
+        children: <Widget>[
+          Text(
               'Step 1: Personal Information',
               style: theme.textTheme.headlineMedium?.copyWith(color: theme.colorScheme.primary),
             ),
@@ -36,10 +36,10 @@ class Step1Demographics extends StatelessWidget {
                 hintText: 'Enter your age in years',
                 prefixIcon: Icon(Icons.cake_outlined),
               ),
-              keyboardType: TextInputType.number,
+            keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               initialValue: formData.age,
-              validator: (value) {
+            validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter your age';
                 }
@@ -47,12 +47,12 @@ class Step1Demographics extends StatelessWidget {
                 if (age == null || age <= 0 || age > 120) {
                   return 'Please enter a valid age';
                 }
-                return null;
-              },
+              return null;
+            },
               onSaved: (value) => formData.age = value,
-            ),
+          ),
             const SizedBox(height: 20),
-            DropdownButtonFormField<String>(
+          DropdownButtonFormField<String>(
               decoration: const InputDecoration(
                 labelText: 'Biological Sex',
                 prefixIcon: Icon(Icons.wc_outlined),
@@ -63,12 +63,12 @@ class Step1Demographics extends StatelessWidget {
                 DropdownMenuItem(value: 'female', child: Text('Female')),
                 // Consider adding 'Prefer not to say' or 'Other' based on requirements
               ],
-              validator: (value) {
+                  validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please select your biological sex';
                 }
-                return null;
-              },
+                    return null;
+                  },
               onChanged: (value) {
                 // formData.sex is updated by onSaved, but if immediate update is needed elsewhere:
                 // setState(() { formData.sex = value; }); 

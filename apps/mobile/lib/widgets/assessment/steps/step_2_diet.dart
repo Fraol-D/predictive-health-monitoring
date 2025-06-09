@@ -31,9 +31,9 @@ class Step2Diet extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              'Step 2: Dietary Habits',
+        children: <Widget>[
+          Text(
+            'Step 2: Dietary Habits',
               style: theme.textTheme.headlineMedium?.copyWith(color: theme.colorScheme.primary),
             ),
             const SizedBox(height: 24),
@@ -50,7 +50,7 @@ class Step2Diet extends StatelessWidget {
               onChanged: (value) { /* formData is updated onSave */ },
             ),
             const SizedBox(height: 20),
-            DropdownButtonFormField<String>(
+          DropdownButtonFormField<String>(
               decoration: const InputDecoration(
                 labelText: 'Processed Food Consumption',
                 hintText: 'How often do you eat processed foods?',
@@ -64,21 +64,21 @@ class Step2Diet extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             // Example: Water Intake (Could be more complex, e.g., with units)
-            TextFormField(
+          TextFormField(
               decoration: const InputDecoration(
                 labelText: 'Average Daily Water Intake (Liters)',
                 hintText: 'e.g., 2.5',
                 prefixIcon: Icon(Icons.water_drop_outlined),
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^[0-9]+\.?[0-9]*'))],
               // initialValue: formData.waterIntakeLiters, // Assuming this field exists in AssessmentFormData
-              validator: (value) {
+            validator: (value) {
                 if (value == null || value.isEmpty) return 'Please enter your water intake.';
                 final liters = double.tryParse(value);
                 if (liters == null || liters < 0 || liters > 15) return 'Please enter a valid amount in liters.';
-                return null;
-              },
+              return null;
+            },
               // onSaved: (value) => formData.waterIntakeLiters = value, // Assuming this field exists
             ),
             // TODO: Add more fields as per shared/src/types/assessment.ts DietData

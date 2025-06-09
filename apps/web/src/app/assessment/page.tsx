@@ -198,9 +198,9 @@ const AssessmentPage = () => {
       console.error('Assessment submission failed:', e);
     } finally {
       setIsSubmitting(false);
-      // Trigger the completion view
+    // Trigger the completion view
       setDirection(1);
-      setCurrentStep(assessmentSteps.length);
+    setCurrentStep(assessmentSteps.length);
     }
   };
 
@@ -280,9 +280,9 @@ const AssessmentPage = () => {
                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
             >
                 <div className="mb-8">
-                  <svg className="w-24 h-24 text-green-500 dark:text-green-400 mx-auto" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
+                <svg className="w-24 h-24 text-green-500 dark:text-green-400 mx-auto" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
                 </div>
                 <h3 className="text-3xl font-bold mb-4">Assessment Complete!</h3>
                 <p className="text-muted-foreground mb-6">Here are your initial risk scores. A detailed report is available on your dashboard.</p>
@@ -306,7 +306,7 @@ const AssessmentPage = () => {
                 <Link href="/">
                   <button className="px-8 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold shadow-lg transform hover:scale-105 transition-transform">
                     Back to Dashboard
-                  </button>
+                    </button>
                 </Link>
             </motion.div>
           )}
@@ -348,7 +348,7 @@ const AssessmentPage = () => {
               initial="initial"
               animate="animate"
               exit="exit"
-              className="absolute top-0 left-0 right-0 bottom-0 p-3 md:p-6" // Added padding
+              className="absolute top-0 left-0 right-0 bottom-0 p-3 md:p-6 overflow-y-auto scrollbar-thin"
             >
               {renderCurrentStepComponent()} 
             </motion.div>
