@@ -147,8 +147,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       Text('Don\'t have an account?', style: textTheme.bodyMedium),
                       TextButton(
-                        child: Text('Sign Up', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
                         onPressed: widget.onSignup,
+                        child: Text('Sign Up', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),

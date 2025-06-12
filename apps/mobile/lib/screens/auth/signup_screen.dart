@@ -91,7 +91,7 @@ class _SignupScreenState extends State<SignupScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
           name: _nameController.text.trim(),
-        );
+      );
         // AuthWrapper will handle navigation to home screen on successful signup
       } catch (e) {
         setState(() {
@@ -222,7 +222,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       : CustomButton(
                           text: 'Sign Up',
                           onPressed: _signup,
-                        ),
+                  ),
                   const SizedBox(height: 24.0),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

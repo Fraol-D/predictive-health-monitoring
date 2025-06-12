@@ -1,24 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
-import { BellIcon, UserIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { BellIcon, UserIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/providers/auth-provider';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 
 const Navbar = () => {
   const pathname = usePathname();
   const { user, loading } = useAuth();
-  const router = useRouter();
 
   const isActive = (path: string) => pathname === path;
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    router.push('/login');
-  };
 
   return (
     <nav className="w-full max-w-6xl mb-8 p-3 bg-card/80 backdrop-blur-md rounded-xl shadow-lg">
@@ -57,16 +49,13 @@ const Navbar = () => {
         <div className="flex items-center space-x-4">
           {!loading && user ? (
             <>
-              <Link href="/notifications" className="relative">
-                <BellIcon className="w-6 h-6 text-muted-foreground hover:text-primary transition-colors" />
-                {/* TODO: Add notification badge */}
-              </Link>
-              <Link href="/profile">
-                <UserIcon className="w-6 h-6 text-muted-foreground hover:text-primary transition-colors" />
-              </Link>
-              <button onClick={handleLogout} className="text-muted-foreground hover:text-primary">
-                <ArrowRightOnRectangleIcon className="w-6 h-6" />
-              </button>
+          <Link href="/notifications" className="relative">
+            <BellIcon className="w-6 h-6 text-muted-foreground hover:text-primary transition-colors" />
+            {/* TODO: Add notification badge */}
+          </Link>
+          <Link href="/profile">
+            <UserIcon className="w-6 h-6 text-muted-foreground hover:text-primary transition-colors" />
+          </Link>
             </>
           ) : !loading ? (
             <Link href="/login">

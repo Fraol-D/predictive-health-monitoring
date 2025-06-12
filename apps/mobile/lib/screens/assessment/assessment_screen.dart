@@ -100,7 +100,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
     GlobalKey<FormState>(), // Step 4: Medical History / Symptoms
   ];
 
-  AssessmentFormData _formData = AssessmentFormData();
+  final AssessmentFormData _formData = AssessmentFormData();
   bool _isSubmitting = false; // Loading state for submission
 
   late List<Widget> _assessmentSteps;

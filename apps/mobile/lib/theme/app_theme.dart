@@ -44,30 +44,28 @@ class AppTheme {
       fontFamily: fontInter,
       colorScheme: const ColorScheme.light(
         primary: lightPrimary,
-        secondary: lightAccent, // Web accent maps to M3 secondary
-      background: lightBackground,
+        secondary: lightAccent,
         surface: lightSurface, // For card backgrounds etc.
         onPrimary: lightOnPrimary,
         onSecondary: lightOnAccent,
-        onBackground: lightOnBackground,
         onSurface: lightOnSurface, // Text on cards/surfaces
         error: lightError,
         onError: Colors.white,
         tertiary: lightSuccess, 
         onTertiary: lightOnSuccess,
         outline: lightBorder,
-        surfaceVariant: Color.fromRGBO(240, 240, 240, 1), // Example: maps to web --secondary
+        surfaceContainerHighest: Color.fromRGBO(240, 240, 240, 1), // Example: maps to web --secondary
         onSurfaceVariant: lightMutedForeground, // For muted text
     ),
     scaffoldBackgroundColor: lightBackground,
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 0,
         color: lightSurface, // Solid color for non-glassmorphic cards
         surfaceTintColor: Colors.transparent, // Important for M3 card behavior
         shape: RoundedRectangleBorder(borderRadius: _borderRadius),
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
     ),
-    appBarTheme: AppBarTheme(
+    appBarTheme: const AppBarTheme(
       backgroundColor: lightBackground,
         foregroundColor: lightOnBackground,
       elevation: 0,
@@ -116,7 +114,7 @@ class AppTheme {
         color: lightBorder.withOpacity(0.7),
         thickness: 1,
       ),
-      iconTheme: IconThemeData(color: lightOnSurface),
+      iconTheme: const IconThemeData(color: lightOnSurface),
       primaryIconTheme: const IconThemeData(color: lightPrimary),
     );
   }
@@ -129,29 +127,27 @@ class AppTheme {
       colorScheme: const ColorScheme.dark(
         primary: darkPrimary,
         secondary: darkAccent,
-      background: darkBackground,
         surface: darkSurface,
         onPrimary: darkOnPrimary,
         onSecondary: darkOnAccent,
-        onBackground: darkOnBackground,
         onSurface: darkOnSurface,
         error: darkError,
         onError: Colors.black, // Or a light color depending on error bg
         tertiary: darkSuccess,
         onTertiary: darkOnSuccess,
         outline: darkBorder,
-        surfaceVariant: Color.fromRGBO(55, 65, 81, 1), // Example: maps to web dark --secondary
+        surfaceContainerHighest: Color.fromRGBO(55, 65, 81, 1), // Example: maps to web dark --secondary
         onSurfaceVariant: darkMutedForeground, // For muted text
     ),
     scaffoldBackgroundColor: darkBackground,
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 0,
         color: darkSurface,
       surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: _borderRadius),
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
     ),
-    appBarTheme: AppBarTheme(
+    appBarTheme: const AppBarTheme(
       backgroundColor: darkBackground,
         foregroundColor: darkOnBackground,
       elevation: 0,
@@ -200,7 +196,7 @@ class AppTheme {
         color: darkBorder.withOpacity(0.7),
         thickness: 1,
       ),
-      iconTheme: IconThemeData(color: darkOnSurface),
+      iconTheme: const IconThemeData(color: darkOnSurface),
       primaryIconTheme: const IconThemeData(color: darkPrimary),
     );
   }

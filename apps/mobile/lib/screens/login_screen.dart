@@ -19,8 +19,8 @@ class LoginScreen extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              colorScheme.background,
-              colorScheme.background.withOpacity(0.8),
+              colorScheme.surface,
+              colorScheme.surface.withOpacity(0.8),
             ],
           ),
         ),
@@ -43,7 +43,7 @@ class LoginScreen extends StatelessWidget {
                 Text(
                   'Welcome to',
                   style: textTheme.headlineSmall?.copyWith(
-                    color: colorScheme.onBackground.withOpacity(0.8),
+                    color: colorScheme.onSurface.withOpacity(0.8),
                   ),
                 ).animate().fade(delay: 400.ms).slideY(begin: 0.5, duration: 600.ms),
                 Text(
@@ -59,7 +59,7 @@ class LoginScreen extends StatelessWidget {
                   'Take control of your health with personalized insights and predictions.',
                   textAlign: TextAlign.center,
                   style: textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onBackground.withOpacity(0.7),
+                    color: colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ).animate().fade(delay: 800.ms),
                 const SizedBox(height: 48),

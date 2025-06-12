@@ -27,7 +27,7 @@ class _AuthGateState extends State<AuthGate> {
     final authService = Provider.of<AuthService>(context, listen: false);
 
     return StreamBuilder<User?>(
-      stream: authService.authStateChanges,
+      stream: authService.user,
       builder: (context, snapshot) {
         // User is not logged in
         if (!snapshot.hasData) {

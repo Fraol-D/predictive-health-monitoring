@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/theme_provider.dart';
 import 'assessment/assessment_screen.dart';
 
@@ -49,7 +48,7 @@ class HomeScreen extends StatelessWidget {
         title: Text(
           'Predictive Health',
           style: TextStyle( // Ensuring AppBar title uses the theme's foreground color explicitly if needed
-            color: theme.colorScheme.onBackground, // Or theme.appBarTheme.titleTextStyle?.color
+            color: theme.colorScheme.onSurface, // Or theme.appBarTheme.titleTextStyle?.color
             fontWeight: theme.appBarTheme.titleTextStyle?.fontWeight ?? FontWeight.w600,
             fontSize: theme.appBarTheme.titleTextStyle?.fontSize ?? 20,
           )
