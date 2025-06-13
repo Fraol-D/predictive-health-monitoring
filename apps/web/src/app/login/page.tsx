@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -16,7 +17,6 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
 export default function LoginPage() {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -31,12 +31,8 @@ export default function LoginPage() {
     setResetMessage(null);
     setIsLoading(true);
     try {
-      if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
-      } else {
-        await createUserWithEmailAndPassword(auth, email, password);
-      }
-      router.push('/'); // Redirect to home on successful login/signup
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push('/'); // Redirect to home on successful login
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -80,7 +76,7 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-background">
       <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-xl shadow-lg">
         <h1 className="text-2xl font-bold text-center text-foreground">
-          {isLogin ? 'Login' : 'Sign Up'}
+          Login
         </h1>
         <form onSubmit={handleAuthAction} className="space-y-6">
           <div>
@@ -102,17 +98,15 @@ export default function LoginPage() {
             />
           </div>
 
-          {isLogin && (
-             <div className="flex justify-end text-sm">
-                <button
-                  type="button"
-                  onClick={handlePasswordReset}
-                  className="font-medium text-primary hover:text-primary/90"
-                >
-                  Forgot password?
-                </button>
-              </div>
-          )}
+          <div className="flex justify-end text-sm">
+            <button
+              type="button"
+              onClick={handlePasswordReset}
+              className="font-medium text-primary hover:text-primary/90"
+            >
+              Forgot password?
+            </button>
+          </div>
 
           <div>
             <label
@@ -184,26 +178,17 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full px-4 py-2 text-sm font-medium transition-colors text-primary-foreground bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+              className="w-full px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 shadow-lg transform hover:scale-105 transition-transform duration-300 ease-in-out"
             >
-              {isLoading ? 'Processing...' : (isLogin ? 'Sign in with Email' : 'Sign up with Email')}
+              {isLoading ? 'Processing...' : 'Sign in with Email'}
             </button>
           </div>
         </form>
 
         <div className="text-sm text-center">
-          <button
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError(null);
-              setResetMessage(null);
-            }}
-            className="font-medium text-primary hover:text-primary/90"
-          >
-            {isLogin
-              ? "Don't have an account? Sign Up"
-              : 'Already have an account? Login'}
-          </button>
+           <Link href="/auth/signup" className="font-medium text-primary hover:text-primary/90">
+              Don't have an account? Sign Up
+           </Link>
         </div>
 
         <div className="relative">
@@ -221,7 +206,7 @@ export default function LoginPage() {
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full flex justify-center items-center px-4 py-2 text-sm font-medium text-foreground bg-transparent border border-border rounded-md shadow-sm hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+            className="w-full flex justify-center items-center px-4 py-2 text-sm font-medium text-white rounded-md shadow-sm disabled:opacity-50 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-transform duration-300 ease-in-out"
           >
             {isLoading ? 'Processing...' : 'Sign in with Google'}
           </button>
@@ -229,4 +214,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-} 
+}

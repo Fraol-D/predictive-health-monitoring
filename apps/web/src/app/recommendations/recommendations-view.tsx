@@ -68,7 +68,7 @@ const RecommendationsView = () => {
   return (
     <PageLayout>
         <header className="w-full mb-12">
-          <h2 className="text-4xl font-bold mb-2">Health Recommendations</h2>
+          <h2 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-[#C183FA] to-[#EB499B]">Health Recommendations</h2>
           <p className="text-xl text-muted-foreground">
             Personalized advice to help you lead a healthier life.
           </p>

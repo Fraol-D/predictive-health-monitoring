@@ -50,7 +50,7 @@ export default function ReportHistoryPage() {
   return (
     <PageLayout>
       <header className="w-full mb-12">
-        <h2 className="text-4xl font-bold mb-2">Assessment History</h2>
+        <h2 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-[#C183FA] to-[#EB499B]">Assessment History</h2>
         <p className="text-xl text-muted-foreground">
           Review your past health assessments and track your progress.
         </p>
@@ -74,16 +74,16 @@ export default function ReportHistoryPage() {
                           <span>{new Date(assessment.timestamp).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                         </div>
                       </div>
-      </div>
+                    </div>
                     <div className="flex items-center space-x-4">
                        <div className={`text-right ${getRiskStyling(assessment.overallRisk.level)}`}>
                           <p className="text-2xl font-bold">{assessment.overallRisk.score}%</p>
                           <p className="text-sm font-semibold">{assessment.overallRisk.level} Risk</p>
-      </div>
+                        </div>
                        <ChevronRight className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
-        </div>
-      </div>
-    </div>
+                     </div>
+                   </div>
+                 </div>
               </Link>
             ))}
           </div>
@@ -101,4 +101,4 @@ export default function ReportHistoryPage() {
       </section>
     </PageLayout>
   );
-} 
+}

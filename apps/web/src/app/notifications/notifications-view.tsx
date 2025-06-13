@@ -120,7 +120,7 @@ const NotificationsView = () => {
 
       <main className="w-full max-w-4xl space-y-6">
         <header className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold text-primary">Notifications</h1>
+          <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">Notifications</h1>
           {notifications.length > 0 && unreadCount > 0 && (
             <button 
               onClick={markAllAsRead}

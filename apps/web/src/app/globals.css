@@ -85,3 +85,15 @@ body {
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background-color: hsl(var(--primary) / 0.6);
 }
+
+@layer components {
+  /* Green-to-blue gradient for primary actions like Login, Sign Up, Send Message */
+  .btn-gradient-primary {
+    @apply bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 ease-in-out;
+  }
+
+  /* Purple-to-pink gradient for secondary/special actions like Google Sign-in, Start Assessment */
+  .btn-gradient-secondary {
+    @apply bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 ease-in-out;
+  }
+}

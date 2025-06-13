@@ -36,9 +36,9 @@ const ProfilePage = () => {
   return (
     <PageLayout>
         <header className="w-full mb-12">
-            <h2 className="text-4xl font-bold mb-2">My Profile</h2>
+            <h2 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-[#C183FA] to-[#EB499B]">User Profile</h2>
             <p className="text-xl text-muted-foreground">
-                Manage your account, view your history, and set your preferences.
+                Manage your account information and preferences.
             </p>
         </header>
 

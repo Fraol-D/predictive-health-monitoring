@@ -1,5 +1,9 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { AssessmentData } from '@shared/types/assessment';
 
 interface AssessmentCardProps {
@@ -14,40 +18,39 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment }) => {
   };
 
   const getRiskLevelText = (score: number) => {
-    if (score < 30) return 'Low Risk';
-    if (score < 70) return 'Moderate Risk';
-    return 'High Risk';
+    if (score < 30) return 'Low';
+    if (score < 70) return 'Moderate';
+    return 'High';
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+    <div className="bg-card/80 backdrop-blur-md rounded-xl shadow-lg p-6 transition-all hover:shadow-primary/20">
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Assessment #{assessment.id}
+          <h3 className="text-xl font-semibold text-foreground">
+            Assessment from {new Date(assessment.timestamp).toLocaleDateString()}
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {new Date(assessment.timestamp).toLocaleDateString()}
+          <p className={`text-lg font-bold ${getRiskLevelColor(assessment.riskScores.overall)}`}>
+            {getRiskLevelText(assessment.riskScores.overall)} Risk
           </p>
         </div>
-        <span
-          className={`px-3 py-1 rounded-full text-sm font-medium ${getRiskLevelColor(
-            assessment.riskScores.overall
-          )}`}
-        >
-          {getRiskLevelText(assessment.riskScores.overall)}
-        </span>
+        <div className="text-right">
+          <p className="text-sm text-muted-foreground">Overall Score</p>
+          <p className={`text-3xl font-bold ${getRiskLevelColor(assessment.riskScores.overall)}`}>
+            {assessment.riskScores.overall}%
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 border-t border-border pt-4">
         <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Diabetes Risk</p>
+          <p className="text-sm text-muted-foreground">Diabetes</p>
           <p className={`text-lg font-semibold ${getRiskLevelColor(assessment.riskScores.diabetes)}`}>
             {assessment.riskScores.diabetes}%
           </p>
         </div>
         <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Heart Disease Risk</p>
+          <p className="text-sm text-muted-foreground">Heart Disease</p>
           <p
             className={`text-lg font-semibold ${getRiskLevelColor(
               assessment.riskScores.heartDisease
@@ -57,7 +60,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment }) => {
           </p>
         </div>
         <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Hypertension Risk</p>
+          <p className="text-sm text-muted-foreground">Hypertension</p>
           <p
             className={`text-lg font-semibold ${getRiskLevelColor(
               assessment.riskScores.hypertension
@@ -66,22 +69,12 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment }) => {
             {assessment.riskScores.hypertension}%
           </p>
         </div>
-        <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Overall Risk</p>
-          <p
-            className={`text-lg font-semibold ${getRiskLevelColor(
-              assessment.riskScores.overall
-            )}`}
-          >
-            {assessment.riskScores.overall}%
-          </p>
-        </div>
       </div>
 
       <div className="flex justify-end">
         <Link
           href={`/assessment/report?id=${assessment.id}`}
-          className="text-primary hover:text-primary-dark font-medium"
+          className="font-semibold text-primary hover:underline"
         >
           View Full Report →
         </Link>
@@ -91,6 +84,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment }) => {
 };
 
 export default function HistoryPage() {
+  const router = useRouter();
   // TODO: Replace with actual data from API
   const assessments: AssessmentData[] = [
     {
@@ -165,15 +159,22 @@ export default function HistoryPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-4xl mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <button 
+            onClick={() => router.back()}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 text-foreground font-semibold transition-colors"
+          >
+            <ArrowLeft size={18} />
+            Back
+          </button>
+          <h1 className="text-3xl font-bold text-foreground">
             Assessment History
           </h1>
           <Link
             href="/assessment"
-            className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg"
+            className="px-6 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold shadow-lg transform hover:scale-105 transition-transform"
           >
             New Assessment
           </Link>
@@ -187,4 +188,4 @@ export default function HistoryPage() {
       </div>
     </div>
   );
-} 
+}

@@ -253,8 +253,8 @@ const AssessmentPage = () => {
   // Completion View (if currentStep goes beyond actual data forms)
   if (currentStep >= assessmentSteps.length) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white dark:from-background dark:to-background/80 dark:text-foreground flex flex-col items-center justify-center p-4 md:p-8">
-        <div className="w-full max-w-2xl text-center bg-card/80 dark:bg-card/70 backdrop-blur-md p-8 md:p-12 rounded-xl shadow-2xl">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
+        <div className="w-full max-w-2xl text-center bg-card/80 backdrop-blur-md p-8 md:p-12 rounded-xl shadow-2xl">
           {isSubmitting && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center">
               <div className="w-16 h-16 border-4 border-t-4 border-t-purple-500 border-gray-600 rounded-full animate-spin mb-4"></div>
@@ -287,17 +287,17 @@ const AssessmentPage = () => {
                 <h3 className="text-3xl font-bold mb-4">Assessment Complete!</h3>
                 <p className="text-muted-foreground mb-6">Here are your initial risk scores. A detailed report is available on your dashboard.</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 text-center">
-                  <div className="bg-slate-800/70 p-4 rounded-lg">
+                  <div className="bg-background/50 p-4 rounded-lg">
                     <h4 className="text-lg font-semibold text-purple-400">Diabetes</h4>
                     <p className="text-3xl font-bold">{result.diabetes?.score ?? 'N/A'}%</p>
                     <p className="text-sm text-muted-foreground">{result.diabetes?.level ?? ''}</p>
                   </div>
-                  <div className="bg-slate-800/70 p-4 rounded-lg">
+                  <div className="bg-background/50 p-4 rounded-lg">
                     <h4 className="text-lg font-semibold text-pink-400">Hypertension</h4>
                     <p className="text-3xl font-bold">{result.hypertension?.score ?? 'N/A'}%</p>
                     <p className="text-sm text-muted-foreground">{result.hypertension?.level ?? ''}</p>
                   </div>
-                  <div className="bg-slate-800/70 p-4 rounded-lg">
+                  <div className="bg-background/50 p-4 rounded-lg">
                     <h4 className="text-lg font-semibold text-teal-400">Heart Disease</h4>
                     <p className="text-3xl font-bold">{result.heartDisease?.score ?? 'N/A'}%</p>
                     <p className="text-sm text-muted-foreground">{result.heartDisease?.level ?? ''}</p>
@@ -316,7 +316,7 @@ const AssessmentPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white dark:from-background dark:to-background/80 dark:text-foreground flex flex-col items-center justify-center p-4 md:p-8">
+    <div className="flex flex-col items-center justify-center p-4 md:p-8">
       <div className="w-full max-w-2xl">
         <motion.header 
           initial={{opacity: 0, y: -30}}
@@ -336,10 +336,10 @@ const AssessmentPage = () => {
             onStepClick={handleStepClick} 
           />
           {/* Progress bar and step title can be part of AssessmentStepper or here */}
-          <p className="text-slate-300 dark:text-gray-300 text-md">{assessmentSteps[currentStep]?.description}</p>
+          <p className="text-muted-foreground text-md">{assessmentSteps[currentStep]?.description}</p>
         </motion.header>
 
-        <main className="p-6 md:p-8 bg-slate-800/50 dark:bg-card/50 backdrop-blur-lg rounded-xl shadow-2xl min-h-[450px] relative overflow-hidden border border-slate-700/50">
+        <main className="p-6 md:p-8 bg-card/50 backdrop-blur-lg rounded-xl shadow-2xl min-h-[450px] relative overflow-hidden border border-border/50">
           <AnimatePresence initial={false} custom={direction} mode="wait">
             <motion.div
               key={currentStep} // Ensure this key changes to trigger AnimatePresence

@@ -137,7 +137,7 @@ const ChatPage = () => {
               />
             <button
               onClick={handleSendMessage}
-              className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="p-3 rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 shadow-lg transform hover:scale-105"
               disabled={!input.trim() || isLoading}
             >
               <Send className="w-6 h-6" />
