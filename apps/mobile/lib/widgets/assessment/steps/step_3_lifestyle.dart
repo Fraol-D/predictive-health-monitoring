@@ -1,110 +1,126 @@
 import 'package:flutter/material.dart';
-import 'package:predictive_health_monitoring/screens/assessment/assessment_screen.dart'; // For AssessmentFormData
+import 'package:predictive_health_monitoring/widgets/assessment/steps/step_state.dart';
 
-class Step3Lifestyle extends StatelessWidget {
-  final GlobalKey<FormState> formKey;
-  final AssessmentFormData formData;
+class Step3Lifestyle extends StatefulWidget {
+  final Function(Map<String, dynamic>) onCompleted;
 
-  const Step3Lifestyle({
-    super.key,
-    required this.formKey,
-    required this.formData,
-  });
+  const Step3Lifestyle({super.key, required this.onCompleted});
+
+  @override
+  State<Step3Lifestyle> createState() => _Step3LifestyleState();
+}
+
+class _Step3LifestyleState extends AssessmentStepState<Step3Lifestyle> {
+  final _formKey = GlobalKey<FormState>();
+  String? _physicalActivityFrequency;
+  String? _stressLevel;
+  String? _alcoholConsumption;
+  bool _smokingStatus = false;
+
+  @override
+  bool validateAndSave() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      widget.onCompleted({
+        'physicalActivityFrequency': _physicalActivityFrequency,
+        'stressLevel': _stressLevel,
+        'alcoholConsumption': _alcoholConsumption,
+        'smokingStatus': _smokingStatus,
+      });
+      return true;
+    }
+    return false;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    const List<DropdownMenuItem<String>> activityFrequencyOptions = [
-      DropdownMenuItem(value: 'daily', child: Text('Daily')),
-      DropdownMenuItem(value: 'multiple_times_week', child: Text('Multiple times a week')),
-      DropdownMenuItem(value: 'once_week', child: Text('Once a week')),
-      DropdownMenuItem(value: 'rarely', child: Text('Rarely')),
-      DropdownMenuItem(value: 'never', child: Text('Never / Sedentary')),
-    ];
-
-    const List<DropdownMenuItem<String>> alcoholOptions = [
-      DropdownMenuItem(value: 'none', child: Text('None')),
-      DropdownMenuItem(value: 'occasional', child: Text('Occasional (e.g., 1-2 times/month)')),
-      DropdownMenuItem(value: 'moderate', child: Text('Moderate (e.g., 1-2 times/week)')),
-      DropdownMenuItem(value: 'heavy', child: Text('Heavy (e.g., 3+ times/week)')),
-      DropdownMenuItem(value: 'very_heavy', child: Text('Very Heavy (Daily or almost daily)')),
-    ];
-
-    const List<DropdownMenuItem<String>> stressOptions = [
-      DropdownMenuItem(value: 'low', child: Text('Low')),
-      DropdownMenuItem(value: 'moderate', child: Text('Moderate')),
-      DropdownMenuItem(value: 'high', child: Text('High')),
-      DropdownMenuItem(value: 'very_high', child: Text('Very High')),
-    ];
-
     return Form(
-      key: formKey,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Text(
-              'Step 3: Lifestyle Habits',
-              style: theme.textTheme.headlineMedium?.copyWith(color: theme.colorScheme.primary),
+            "Your Lifestyle",
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Lifestyle choices are strong indicators of health outcomes.",
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 24),
+          DropdownButtonFormField<String>(
+            value: _physicalActivityFrequency,
+            decoration: const InputDecoration(
+              labelText: 'Physical Activity Frequency',
             ),
-            const SizedBox(height: 24),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                labelText: 'Physical Activity Frequency',
-                hintText: 'How often do you engage in physical activity?',
-                prefixIcon: Icon(Icons.fitness_center_outlined),
-              ),
-              value: formData.physicalActivityFrequency,
-              items: activityFrequencyOptions,
-              validator: (value) => value == null || value.isEmpty ? 'Please select activity frequency' : null,
-              onSaved: (value) => formData.physicalActivityFrequency = value,
-              onChanged: (value) { formData.physicalActivityFrequency = value; },
+            items: ['daily', 'multiple_times_week', 'once_week', 'rarely', 'never']
+                .map((label) => DropdownMenuItem(
+                      value: label,
+                      child: Text(label.replaceAll('_', ' ')),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                _physicalActivityFrequency = value;
+              });
+            },
+            onSaved: (value) => _physicalActivityFrequency = value,
+            validator: (value) => value == null || value.isEmpty ? 'Please select a frequency' : null,
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: _stressLevel,
+            decoration: const InputDecoration(
+              labelText: 'Stress Level',
             ),
-            const SizedBox(height: 20),
-            SwitchListTile(
-              title: const Text('Current Smoking Status'),
-              subtitle: Text(formData.smokingStatus ? 'Currently smoke' : 'Do not currently smoke'),
-              value: formData.smokingStatus,
-              onChanged: (bool value) {
-                formData.smokingStatus = value;
-                (context as Element).markNeedsBuild();
-              },
-              secondary: Icon(formData.smokingStatus ? Icons.smoking_rooms : Icons.smoke_free),
-              activeColor: theme.colorScheme.primary,
-              contentPadding: EdgeInsets.zero,
+            items: ['low', 'moderate', 'high', 'very_high']
+                .map((label) => DropdownMenuItem(
+                      value: label,
+                      child: Text(label.replaceAll('_', ' ')),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                _stressLevel = value;
+              });
+            },
+            onSaved: (value) => _stressLevel = value,
+            validator: (value) => value == null || value.isEmpty ? 'Please select a level' : null,
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: _alcoholConsumption,
+            decoration: const InputDecoration(
+              labelText: 'Alcohol Consumption',
             ),
-            const SizedBox(height: 20),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                labelText: 'Alcohol Consumption',
-                hintText: 'How often do you consume alcohol?',
-                prefixIcon: Icon(Icons.local_bar_outlined),
-              ),
-              value: formData.alcoholConsumption,
-              items: alcoholOptions,
-              validator: (value) => value == null || value.isEmpty ? 'Please select alcohol consumption frequency' : null,
-              onSaved: (value) => formData.alcoholConsumption = value,
-              onChanged: (value) { formData.alcoholConsumption = value; },
-            ),
-            const SizedBox(height: 20),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                labelText: 'Perceived Stress Level',
-                hintText: 'How would you rate your average stress level?',
-                prefixIcon: Icon(Icons.sentiment_very_dissatisfied_outlined),
-              ),
-              value: formData.stressLevel,
-              items: stressOptions,
-              validator: (value) => value == null || value.isEmpty ? 'Please select your stress level' : null,
-              onSaved: (value) => formData.stressLevel = value,
-              onChanged: (value) { formData.stressLevel = value; },
-            ),
-            // TODO: Add more fields as per shared/src/types/assessment.ts LifestyleData
-            // e.g., sleepHoursPerNight (TextFormField), notes (TextFormField)
-          ],
-        ),
+            items: ['none', 'occasional', 'moderate', 'heavy']
+                .map((label) => DropdownMenuItem(
+                      value: label,
+                      child: Text(label.replaceAll('_', ' ')),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                _alcoholConsumption = value;
+              });
+            },
+            onSaved: (value) => _alcoholConsumption = value,
+            validator: (value) => value == null || value.isEmpty ? 'Please select a level' : null,
+          ),
+          const SizedBox(height: 16),
+          SwitchListTile(
+            title: const Text('Do you smoke?'),
+            value: _smokingStatus,
+            onChanged: (bool value) {
+              setState(() {
+                _smokingStatus = value;
+              });
+            },
+            secondary: const Icon(Icons.smoking_rooms_outlined),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ],
       ),
     );
   }

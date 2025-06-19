@@ -2,68 +2,39 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
   // Get user stream
   Stream<User?> get user {
-    return _auth.authStateChanges();
+    return _firebaseAuth.authStateChanges();
   }
 
   // Get current user
-  User? get currentUser {
-    return _auth.currentUser;
-  }
+  User? get currentUser => _firebaseAuth.currentUser;
 
   // Sign up with email and password
-  Future<UserCredential?> signUpWithEmailAndPassword({
+  Future<UserCredential> createUserWithEmailAndPassword({
     required String email,
     required String password,
-    required String name,
   }) async {
-    try {
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      // Update the user's profile with their name
-      await userCredential.user?.updateDisplayName(name);
-      // Reload the user to get the updated info
-      await userCredential.user?.reload();
-      return userCredential;
-    } on FirebaseAuthException catch (e) {
-      // Provide more specific error messages
-      if (e.code == 'weak-password') {
-        throw 'The password provided is too weak.';
-      } else if (e.code == 'email-already-in-use') {
-        throw 'An account already exists for that email.';
-      }
-      throw 'An error occurred during sign up. Please try again.';
-    } catch (e) {
-      print(e);
-      throw 'An unexpected error occurred.';
-    }
+    return await _firebaseAuth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
   }
 
   // Sign in with email and password
-  Future<UserCredential?> signInWithEmailAndPassword({
+  Future<UserCredential> signInWithEmailAndPassword({
     required String email,
     required String password,
   }) async {
-    try {
-      return await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
-        throw 'Invalid email or password.';
-      }
-      throw 'An error occurred during sign in. Please try again.';
-    } catch (e) {
-      print(e);
-      throw 'An unexpected error occurred.';
-    }
+    return await _firebaseAuth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
   }
 
   // Sign in with Google
@@ -86,7 +57,7 @@ class AuthService {
       );
 
       // Once signed in, return the UserCredential
-      return await _auth.signInWithCredential(credential);
+      return await _firebaseAuth.signInWithCredential(credential);
     } catch (e) {
       // TODO: Add more robust error handling
       print('Error during Google sign-in: $e');
@@ -98,7 +69,7 @@ class AuthService {
   Future<void> signOut() async {
     try {
       await _googleSignIn.signOut();
-      await _auth.signOut();
+      await _firebaseAuth.signOut();
     } catch (e) {
       print('Error signing out: $e');
     }

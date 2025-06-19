@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:predictive_health_monitoring/services/auth_service.dart';
-import 'package:predictive_health_monitoring/widgets/common/custom_button.dart';
-import 'package:predictive_health_monitoring/widgets/common/custom_text_field.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:predictive_health_monitoring/screens/auth/signup_screen.dart';
+import 'package:predictive_health_monitoring/theme/app_theme.dart';
+import 'package:predictive_health_monitoring/widgets/common/gradient_button.dart';
+import 'package:predictive_health_monitoring/widgets/common/social_button.dart';
 
 class LoginScreen extends StatefulWidget {
-  final VoidCallback onSignup;
-
-  const LoginScreen({Key? key, required this.onSignup}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
+  bool _showPassword = false;
 
   @override
   void dispose() {
@@ -27,137 +27,183 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _login() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
+  Future<void> _loginWithEmail() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-      try {
-        final authService = Provider.of<AuthService>(context, listen: false);
-        await authService.signInWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-        // AuthWrapper will handle navigation to home screen
-      } catch (e) {
+    try {
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      if (credential.user != null && !credential.user!.emailVerified) {
+        await credential.user!.sendEmailVerification();
         setState(() {
-          _errorMessage = e.toString();
+          _errorMessage = 'Please verify your email. A new verification link has been sent.';
         });
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
       }
+      // AuthGate will handle navigation
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _errorMessage = e.message ?? 'An unknown error occurred.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    // Implement Google Sign-In logic here later
+  }
+
+  Future<void> _resetPassword() async {
+     if (_emailController.text.trim().isEmpty) {
+      setState(() {
+        _errorMessage = 'Please enter your email to reset your password.';
+      });
+      return;
+    }
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: _emailController.text.trim());
+      setState(() {
+        _errorMessage = 'Password reset link sent to your email.';
+      });
+    } on FirebaseAuthException catch (e) {
+       setState(() {
+        _errorMessage = e.message;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: const Text('Login'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [colors.surface, colors.surfaceContainerLowest],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Text(
-                    'Welcome Back',
-                    style: textTheme.headlineLarge?.copyWith(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              const SizedBox(height: 60),
+              Text(
+                'Welcome Back',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: colors.primary,
+                      color: Theme.of(context).colorScheme.onBackground,
                     ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Log in to access your dashboard.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+              const SizedBox(height: 48.0),
+              if (_errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Log in to your account',
-                    style: textTheme.bodyLarge?.copyWith(color: colors.onSurfaceVariant),
-                    textAlign: TextAlign.center,
+                ),
+              _buildEmailField(),
+              const SizedBox(height: 16.0),
+              _buildPasswordField(),
+               Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: _resetPassword,
+                  child: Text(
+                    'Forgot password?',
+                    style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 32.0),
-                  CustomTextField(
-                    controller: _emailController,
-                    labelText: 'Email Address',
-                    prefixIcon: Icons.email_outlined,
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      return null;
+                ),
+              ),
+              const SizedBox(height: 24.0),
+              GradientButton(
+                text: 'Log In with Email',
+                onPressed: _loginWithEmail,
+                isLoading: _isLoading,
+              ),
+              const SizedBox(height: 24.0),
+              const Row(
+                children: [
+                  Expanded(child: Divider()),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text('OR'),
+                  ),
+                  Expanded(child: Divider()),
+                ],
+              ),
+              const SizedBox(height: 24.0),
+              SocialButton(
+                text: 'Sign in with Google',
+                onPressed: _signInWithGoogle,
+                // Add Google icon
+              ),
+              const SizedBox(height: 48.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("Don't have an account?", style: Theme.of(context).textTheme.bodyMedium),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SignupScreen()));
                     },
-                  ),
-                  const SizedBox(height: 16.0),
-                  CustomTextField(
-                    controller: _passwordController,
-                    labelText: 'Password',
-                    prefixIcon: Icons.lock_outline,
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 32.0),
-                  if (_errorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: Text(
-                        _errorMessage!,
-                        style: TextStyle(color: colors.error, fontSize: 14),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : CustomButton(
-                          text: 'Log In',
-                          onPressed: _login,
-                        ),
-                  const SizedBox(height: 24.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Don\'t have an account?', style: textTheme.bodyMedium),
-                      TextButton(
-                        onPressed: widget.onSignup,
-                        child: Text('Sign Up', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
-                      ),
-                    ],
+                    child: Text('Sign Up', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
-            ),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildEmailField() {
+    return TextFormField(
+      controller: _emailController,
+      decoration: InputDecoration(
+        labelText: 'Email Address',
+        prefixIcon: Icon(Icons.mail_outline, color: Theme.of(context).colorScheme.onSurfaceVariant),
+      ),
+      keyboardType: TextInputType.emailAddress,
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return TextFormField(
+      controller: _passwordController,
+      decoration: InputDecoration(
+        labelText: 'Password',
+        prefixIcon: Icon(Icons.lock_outline, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _showPassword ? Icons.visibility_off : Icons.visibility,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          onPressed: () {
+            setState(() {
+              _showPassword = !_showPassword;
+            });
+          },
+        ),
+      ),
+      obscureText: !_showPassword,
     );
   }
 } 

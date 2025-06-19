@@ -1,90 +1,117 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:predictive_health_monitoring/screens/assessment/assessment_screen.dart'; // For AssessmentFormData
+import 'package:predictive_health_monitoring/widgets/assessment/steps/step_state.dart';
 
-class Step2Diet extends StatelessWidget {
-  final GlobalKey<FormState> formKey;
-  final AssessmentFormData formData;
+class Step2Diet extends StatefulWidget {
+  final Function(Map<String, dynamic>) onCompleted;
 
-  const Step2Diet({
-    super.key,
-    required this.formKey,
-    required this.formData,
-  });
+  const Step2Diet({super.key, required this.onCompleted});
+
+  @override
+  State<Step2Diet> createState() => _Step2DietState();
+}
+
+class _Step2DietState extends AssessmentStepState<Step2Diet> {
+  final _formKey = GlobalKey<FormState>();
+  String? _fruitVegFrequency;
+  String? _processedFoodFrequency;
+  final _waterIntakeController = TextEditingController();
+
+  @override
+  bool validateAndSave() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      widget.onCompleted({
+        'fruitVegFrequency': _fruitVegFrequency,
+        'processedFoodFrequency': _processedFoodFrequency,
+        'waterIntakeLiters': _waterIntakeController.text,
+      });
+      return true;
+    }
+    return false;
+  }
+
+  @override
+  void dispose() {
+    _waterIntakeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    // Define options for dropdowns to avoid repetition and ensure consistency
-    const List<DropdownMenuItem<String>> frequencyOptions = [
-      DropdownMenuItem(value: 'daily', child: Text('Daily')),
-      DropdownMenuItem(value: 'multiple_times_week', child: Text('Multiple times a week')),
-      DropdownMenuItem(value: 'once_week', child: Text('Once a week')),
-      DropdownMenuItem(value: 'rarely', child: Text('Rarely')),
-      DropdownMenuItem(value: 'never', child: Text('Never')),
-    ];
-
     return Form(
-      key: formKey,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Text(
-            'Step 2: Dietary Habits',
-              style: theme.textTheme.headlineMedium?.copyWith(color: theme.colorScheme.primary),
-            ),
-            const SizedBox(height: 24),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                labelText: 'Fruit and Vegetable Consumption',
-                hintText: 'How often do you eat fruits/vegetables?',
-                prefixIcon: Icon(Icons.local_florist_outlined),
-              ),
-              value: formData.fruitVegFrequency,
-              items: frequencyOptions,
-              validator: (value) => value == null || value.isEmpty ? 'Please select a frequency' : null,
-              onSaved: (value) => formData.fruitVegFrequency = value,
-              onChanged: (value) { /* formData is updated onSave */ },
-            ),
-            const SizedBox(height: 20),
+            "Your Dietary Habits",
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Understanding your diet is key to a holistic health view.",
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 24),
           DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                labelText: 'Processed Food Consumption',
-                hintText: 'How often do you eat processed foods?',
-                prefixIcon: Icon(Icons.fastfood_outlined),
-              ),
-              value: formData.processedFoodFrequency,
-              items: frequencyOptions,
-              validator: (value) => value == null || value.isEmpty ? 'Please select a frequency' : null,
-              onSaved: (value) => formData.processedFoodFrequency = value,
-              onChanged: (value) { /* formData is updated onSave */ },
+            value: _fruitVegFrequency,
+            decoration: const InputDecoration(
+              labelText: 'How often do you eat fruits and vegetables?',
             ),
-            const SizedBox(height: 20),
-            // Example: Water Intake (Could be more complex, e.g., with units)
+            items: ['daily', 'multiple_times_week', 'once_week', 'rarely', 'never']
+                .map((label) => DropdownMenuItem(
+                      value: label,
+                      child: Text(label.replaceAll('_', ' ')),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                _fruitVegFrequency = value;
+              });
+            },
+            onSaved: (value) {
+                _fruitVegFrequency = value;
+            },
+            validator: (value) => value == null || value.isEmpty ? 'Please select a frequency' : null,
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: _processedFoodFrequency,
+            decoration: const InputDecoration(
+              labelText: 'How often do you consume processed foods?',
+            ),
+            items: ['daily', 'multiple_times_week', 'once_week', 'rarely', 'never']
+                .map((label) => DropdownMenuItem(
+                      value: label,
+                      child: Text(label.replaceAll('_', ' ')),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                _processedFoodFrequency = value;
+              });
+            },
+            onSaved: (value) {
+                _processedFoodFrequency = value;
+            },
+            validator: (value) => value == null || value.isEmpty ? 'Please select a frequency' : null,
+          ),
+          const SizedBox(height: 16),
           TextFormField(
-              decoration: const InputDecoration(
-                labelText: 'Average Daily Water Intake (Liters)',
-                hintText: 'e.g., 2.5',
-                prefixIcon: Icon(Icons.water_drop_outlined),
-              ),
+            controller: _waterIntakeController,
+            decoration: const InputDecoration(
+              labelText: 'Daily Water Intake (in Liters)',
+              prefixIcon: Icon(Icons.local_drink_outlined),
+            ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^[0-9]+\.?[0-9]*'))],
-              // initialValue: formData.waterIntakeLiters, // Assuming this field exists in AssessmentFormData
             validator: (value) {
-                if (value == null || value.isEmpty) return 'Please enter your water intake.';
-                final liters = double.tryParse(value);
-                if (liters == null || liters < 0 || liters > 15) return 'Please enter a valid amount in liters.';
+              if (value == null || value.isEmpty || double.tryParse(value) == null) {
+                return 'Please enter a valid number';
+              }
               return null;
             },
-              // onSaved: (value) => formData.waterIntakeLiters = value, // Assuming this field exists
-            ),
-            // TODO: Add more fields as per shared/src/types/assessment.ts DietData
-            // e.g., dietaryRestrictions, notes
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

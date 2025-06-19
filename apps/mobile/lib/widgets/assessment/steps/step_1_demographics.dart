@@ -1,127 +1,142 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide StepState;
 import 'package:flutter/services.dart'; // For FilteringTextInputFormatter
-import 'package:predictive_health_monitoring/screens/assessment/assessment_screen.dart'; // For AssessmentFormData
+import 'package:predictive_health_monitoring/widgets/assessment/steps/step_state.dart';
 
 // Define a data class or use a Map for step data if more complex typing is needed later
 // typedef Step1Data = Map<String, dynamic>; 
 
-class Step1Demographics extends StatelessWidget {
-  final GlobalKey<FormState> formKey;
-  final AssessmentFormData formData;
+class Step1Demographics extends StatefulWidget {
+  final Function(Map<String, dynamic>) onCompleted;
 
-  const Step1Demographics({
-    super.key,
-    required this.formKey,
-    required this.formData,
-  });
+  const Step1Demographics({super.key, required this.onCompleted});
+
+  @override
+  State<Step1Demographics> createState() => _Step1DemographicsState();
+}
+
+class _Step1DemographicsState extends AssessmentStepState<Step1Demographics> {
+  final _formKey = GlobalKey<FormState>();
+  final _ageController = TextEditingController();
+  final _heightController = TextEditingController();
+  final _weightController = TextEditingController();
+  String? _gender;
+
+  @override
+  bool validateAndSave() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      widget.onCompleted({
+        'age': _ageController.text,
+        'sex': _gender,
+        'height': _heightController.text,
+        'weight': _weightController.text,
+      });
+      return true;
+    }
+    return false;
+  }
+
+  @override
+  void dispose() {
+    _ageController.dispose();
+    _heightController.dispose();
+    _weightController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Form(
-      key: formKey,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Text(
-              'Step 1: Personal Information',
-              style: theme.textTheme.headlineMedium?.copyWith(color: theme.colorScheme.primary),
+            "Tell us about yourself",
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "This information helps us tailor your assessment.",
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 24),
+          TextFormField(
+            controller: _ageController,
+            decoration: const InputDecoration(
+              labelText: 'Age',
+              prefixIcon: Icon(Icons.cake_outlined),
             ),
-            const SizedBox(height: 24),
-            TextFormField(
-              decoration: const InputDecoration(
-                labelText: 'Age',
-                hintText: 'Enter your age in years',
-                prefixIcon: Icon(Icons.cake_outlined),
-              ),
             keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              initialValue: formData.age,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your age';
-                }
-                final age = int.tryParse(value);
-                if (age == null || age <= 0 || age > 120) {
-                  return 'Please enter a valid age';
-                }
+              if (value == null || value.isEmpty || int.tryParse(value) == null) {
+                return 'Please enter a valid age';
+              }
               return null;
             },
-              onSaved: (value) => formData.age = value,
           ),
-            const SizedBox(height: 20),
+          const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                labelText: 'Biological Sex',
-                prefixIcon: Icon(Icons.wc_outlined),
-              ),
-              value: formData.sex,
-              items: const [
-                DropdownMenuItem(value: 'male', child: Text('Male')),
-                DropdownMenuItem(value: 'female', child: Text('Female')),
-                // Consider adding 'Prefer not to say' or 'Other' based on requirements
-              ],
-                  validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please select your biological sex';
-                }
-                    return null;
-                  },
-              onChanged: (value) {
-                // formData.sex is updated by onSaved, but if immediate update is needed elsewhere:
-                // setState(() { formData.sex = value; }); 
-                // However, this is a StatelessWidget, so state changes are managed by parent.
-              },
-              onSaved: (value) => formData.sex = value,
+            value: _gender,
+            decoration: const InputDecoration(
+              labelText: 'Gender',
+              prefixIcon: Icon(Icons.wc_outlined),
             ),
-            const SizedBox(height: 20),
-            TextFormField(
-              decoration: const InputDecoration(
-                labelText: 'Height (cm)',
-                hintText: 'Enter your height in centimeters',
-                prefixIcon: Icon(Icons.height_outlined),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^[0-9]+\.?[0-9]*'))],
-              initialValue: formData.height,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your height';
-                }
-                final height = double.tryParse(value);
-                if (height == null || height <= 0 || height > 300) {
-                  return 'Please enter a valid height in cm';
-                }
-                return null;
-              },
-              onSaved: (value) => formData.height = value,
+            items: ['Male', 'Female', 'Other']
+                .map((label) => DropdownMenuItem(
+                      value: label,
+                      child: Text(label),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                _gender = value;
+              });
+            },
+            onSaved: (value) {
+              _gender = value;
+            },
+            validator: (value) {
+              if (value == null) {
+                return 'Please select your gender';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _heightController,
+            decoration: const InputDecoration(
+              labelText: 'Height (cm)',
+              prefixIcon: Icon(Icons.height),
             ),
-            const SizedBox(height: 20),
-            TextFormField(
-              decoration: const InputDecoration(
-                labelText: 'Weight (kg)',
-                hintText: 'Enter your weight in kilograms',
-                prefixIcon: Icon(Icons.scale_outlined),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^[0-9]+\.?[0-9]*'))],
-              initialValue: formData.weight,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your weight';
-                }
-                final weight = double.tryParse(value);
-                if (weight == null || weight <= 0 || weight > 500) {
-                  return 'Please enter a valid weight in kg';
-                }
-                return null;
-              },
-              onSaved: (value) => formData.weight = value,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your height';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _weightController,
+            decoration: const InputDecoration(
+              labelText: 'Weight (kg)',
+              prefixIcon: Icon(Icons.monitor_weight_outlined),
             ),
-          ],
-        ),
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your weight';
+              }
+              return null;
+            },
+          ),
+        ],
       ),
     );
   }

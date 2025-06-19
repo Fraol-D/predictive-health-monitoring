@@ -4,11 +4,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:predictive_health_monitoring/theme/app_theme.dart';
 import 'package:predictive_health_monitoring/providers/theme_provider.dart';
-import 'package:predictive_health_monitoring/widgets/auth_gate.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:predictive_health_monitoring/services/auth_service.dart';
 import 'package:predictive_health_monitoring/firebase_options.dart';
 import 'package:predictive_health_monitoring/screens/assessment/assessment_screen.dart';
+import 'package:predictive_health_monitoring/screens/auth_gate.dart';
+import 'package:predictive_health_monitoring/services/auth_service.dart';
 
 // The firebase_options.dart file is no longer used, we will use .env for secrets.
 // import 'firebase_options.dart';
@@ -34,26 +34,24 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
         Provider<AuthService>(create: (_) => AuthService()),
       ],
       child: const MyApp(),
     ),
-    );
+  );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-
     return MaterialApp(
       title: 'Predictive Health Monitoring',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: themeProvider.themeMode,
+      themeMode: Provider.of<ThemeProvider>(context).themeMode,
       debugShowCheckedModeBanner: false,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

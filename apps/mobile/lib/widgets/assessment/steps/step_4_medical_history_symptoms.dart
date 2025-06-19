@@ -1,157 +1,142 @@
 import 'package:flutter/material.dart';
-import 'package:predictive_health_monitoring/screens/assessment/assessment_screen.dart'; // For AssessmentFormData
+import 'package:intl/intl.dart';
+import 'package:predictive_health_monitoring/widgets/assessment/steps/step_state.dart';
 
-class Step4MedicalHistoryAndSymptoms extends StatelessWidget {
-  final GlobalKey<FormState> formKey;
-  final AssessmentFormData formData;
+class Step4MedicalHistory extends StatefulWidget {
+  final Function(Map<String, dynamic>) onCompleted;
 
-  const Step4MedicalHistoryAndSymptoms({
-    super.key,
-    required this.formKey,
-    required this.formData,
-  });
+  const Step4MedicalHistory({super.key, required this.onCompleted});
+
+  @override
+  State<Step4MedicalHistory> createState() => _Step4MedicalHistoryState();
+}
+
+class _Step4MedicalHistoryState extends AssessmentStepState<Step4MedicalHistory> {
+  final _formKey = GlobalKey<FormState>();
+  final _conditionsController = TextEditingController();
+  final _medicationsController = TextEditingController();
+  final _allergiesController = TextEditingController();
+  final Map<String, bool> _familyHistory = {
+    'Diabetes': false,
+    'Heart Disease': false,
+    'Hypertension': false,
+    'Cancer': false,
+  };
+  DateTime? _lastCheckupDate;
+
+  @override
+  bool validateAndSave() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      widget.onCompleted({
+        'familyHistory': _familyHistory.entries
+            .where((e) => e.value)
+            .map((e) => e.key)
+            .toList(),
+        'existingConditions': _conditionsController.text,
+        'medications': _medicationsController.text,
+        'allergies': _allergiesController.text,
+        'lastCheckupDate': _lastCheckupDate?.toIso8601String(),
+      });
+      return true;
+    }
+    return false;
+  }
+
+  @override
+  void dispose() {
+    _conditionsController.dispose();
+    _medicationsController.dispose();
+    _allergiesController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    // Predefined common symptoms for checkboxes
-    const List<String> commonSymptoms = [
-      'Chest pain or discomfort',
-      'Shortness of breath',
-      'Persistent fatigue',
-      'Dizziness or lightheadedness',
-      'Unexplained weight loss/gain',
-      'Frequent headaches',
-    ];
-
     return Form(
-      key: formKey,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              'Step 4: Medical History & Symptoms',
-              style: theme.textTheme.headlineMedium?.copyWith(color: theme.colorScheme.primary),
-            ),
-            const SizedBox(height: 24),
-
-            Text('Family Medical History', style: theme.textTheme.titleLarge),
-            const SizedBox(height: 8),
-            SwitchListTile(
-              title: const Text('Diabetes'),
-              value: formData.familyHistoryDiabetes,
-              onChanged: (value) {
-                formData.familyHistoryDiabetes = value;
-                (context as Element).markNeedsBuild(); // Request rebuild for subtitle or visual feedback
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Medical History & Symptoms",
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "This information is crucial for an accurate assessment.",
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 24),
+          Text("Family History", style: Theme.of(context).textTheme.titleMedium),
+          ..._familyHistory.keys.map((String key) {
+            return CheckboxListTile(
+              title: Text(key),
+              value: _familyHistory[key],
+              onChanged: (bool? value) {
+                setState(() {
+                  _familyHistory[key] = value!;
+                });
               },
+              controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
+            );
+          }).toList(),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _conditionsController,
+            decoration: const InputDecoration(
+              labelText: 'Your Existing Conditions (comma-separated)',
+              hintText: 'e.g., Asthma, Arthritis',
             ),
-            SwitchListTile(
-              title: const Text('Heart Disease'),
-              value: formData.familyHistoryHeartDisease,
-              onChanged: (value) {
-                formData.familyHistoryHeartDisease = value;
-                (context as Element).markNeedsBuild();
-              },
-              contentPadding: EdgeInsets.zero,
+            onSaved: (value) => _conditionsController.text = value ?? '',
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _medicationsController,
+            decoration: const InputDecoration(
+              labelText: 'Current Medications (comma-separated)',
+              hintText: 'e.g., Aspirin, Metformin',
             ),
-            SwitchListTile(
-              title: const Text('Hypertension (High Blood Pressure)'),
-              value: formData.familyHistoryHypertension,
-              onChanged: (value) {
-                formData.familyHistoryHypertension = value;
-                (context as Element).markNeedsBuild();
-              },
-              contentPadding: EdgeInsets.zero,
+            onSaved: (value) => _medicationsController.text = value ?? '',
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _allergiesController,
+            decoration: const InputDecoration(
+              labelText: 'Allergies (comma-separated)',
+              hintText: 'e.g., Peanuts, Penicillin',
             ),
-            SwitchListTile(
-              title: const Text('Cancer'),
-              value: formData.familyHistoryCancer,
-              onChanged: (value) {
-                formData.familyHistoryCancer = value;
-                (context as Element).markNeedsBuild();
-              },
-              contentPadding: EdgeInsets.zero,
+            onSaved: (value) => _allergiesController.text = value ?? '',
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            readOnly: true,
+            decoration: InputDecoration(
+              labelText: 'Last Checkup Date',
+              suffixIcon: const Icon(Icons.calendar_today),
+              hintText: _lastCheckupDate == null
+                  ? 'Select a date'
+                  : DateFormat.yMMMd().format(_lastCheckupDate!),
             ),
-            TextFormField(
-              decoration: const InputDecoration(labelText: 'Other relevant family history (optional)'),
-              initialValue: formData.familyHistoryOther,
-              onSaved: (value) => formData.familyHistoryOther = value,
-              maxLines: 2,
-            ),
-            const SizedBox(height: 20),
-
-            Text('Personal Medical History', style: theme.textTheme.titleLarge),
-            const SizedBox(height: 8),
-            TextFormField(
-              decoration: const InputDecoration(labelText: 'Existing medical conditions (e.g., Asthma, Thyroid issues)', hintText: 'Separate with commas if multiple'),
-              initialValue: formData.existingConditions,
-              onSaved: (value) => formData.existingConditions = value,
-              maxLines: 2,
-              // validator: (value) => value == null || value.isEmpty ? 'Please list any conditions or type \'None\'' : null, // Make it optional or required
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              decoration: const InputDecoration(labelText: 'Current medications (including supplements)', hintText: 'Separate with commas if multiple'),
-              initialValue: formData.medications,
-              onSaved: (value) => formData.medications = value,
-              maxLines: 2,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              decoration: const InputDecoration(labelText: 'Known allergies (medications, food, etc.)', hintText: 'Separate with commas if multiple'),
-              initialValue: formData.allergies,
-              onSaved: (value) => formData.allergies = value,
-              maxLines: 2,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              decoration: const InputDecoration(
-                labelText: 'Date of Last Medical Checkup (approximate)',
-                hintText: "e.g., YYYY-MM-DD or '6 months ago'"
-              ),
-              initialValue: formData.lastCheckupDate,
-              onSaved: (value) => formData.lastCheckupDate = value,
-              // TODO: Consider adding a Date Picker widget here
-            ),
-            const SizedBox(height: 24),
-
-            Text('Current Symptoms (select if experienced recently/persistently)', style: theme.textTheme.titleLarge),
-            const SizedBox(height: 8),
-            ...commonSymptoms.map((symptom) {
-              return CheckboxListTile(
-                title: Text(symptom),
-                value: formData.symptoms.contains(symptom),
-                onChanged: (bool? value) {
-                  if (value == true) {
-                    if (!formData.symptoms.contains(symptom)) {
-                      formData.symptoms.add(symptom);
-                    }
-                  } else {
-                    formData.symptoms.remove(symptom);
-                  }
-                  (context as Element).markNeedsBuild(); // Request rebuild
-                },
-                controlAffinity: ListTileControlAffinity.leading,
-                contentPadding: EdgeInsets.zero,
+            onTap: () async {
+              final pickedDate = await showDatePicker(
+                context: context,
+                initialDate: _lastCheckupDate ?? DateTime.now(),
+                firstDate: DateTime(1900),
+                lastDate: DateTime.now(),
               );
-            }).toList(),
-            TextFormField(
-              decoration: const InputDecoration(labelText: 'Other symptoms not listed above (optional)'),
-              onChanged: (value) {
-                // If we want this to be the only way to add "other" symptoms, 
-                // we might need to handle it differently, perhaps a dedicated 'otherSymptoms' field.
-                // For now, this just captures text, but doesn't add to the formData.symptoms list directly.
-                // Or, onSaved, parse this and add if not blank.
-              },
-              // onSaved: (value) { // Example: if (value != null && value.isNotEmpty) formData.symptoms.add("Other: $value"); }
-              maxLines: 2,
-            ),
-          ],
-        ),
+              if (pickedDate != null) {
+                setState(() {
+                  _lastCheckupDate = pickedDate;
+                });
+              }
+            },
+          ),
+        ],
       ),
     );
   }
