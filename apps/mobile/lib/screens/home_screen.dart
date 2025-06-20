@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import 'assessment/assessment_screen.dart';
+import 'reports_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -33,6 +34,13 @@ class HomeScreen extends StatelessWidget {
                 Navigator.pushNamed(context, AssessmentScreen.routeName);
               },
               child: const Text('Start Health Assessment'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ReportsScreen()));
+              },
+              child: const Text('View Full Report'),
             ),
           ],
         ),

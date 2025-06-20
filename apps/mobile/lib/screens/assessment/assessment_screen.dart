@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:predictive_health_monitoring/theme/app_theme.dart';
+import 'package:predictive_health_monitoring/widgets/assessment/custom_stepper.dart';
 import 'package:predictive_health_monitoring/widgets/assessment/steps/step_1_demographics.dart';
 import 'package:predictive_health_monitoring/widgets/assessment/steps/step_2_diet.dart';
 import 'package:predictive_health_monitoring/widgets/assessment/steps/step_3_lifestyle.dart';
 import 'package:predictive_health_monitoring/widgets/assessment/steps/step_4_medical_history_symptoms.dart';
 import 'package:predictive_health_monitoring/widgets/assessment/steps/step_state.dart';
+import 'package:predictive_health_monitoring/widgets/common/gradient_button.dart';
 
 
 class AssessmentScreen extends StatefulWidget {
@@ -16,6 +19,7 @@ class AssessmentScreen extends StatefulWidget {
 
 class _AssessmentScreenState extends State<AssessmentScreen> {
   int _currentStep = 0;
+  final PageController _pageController = PageController();
   final Map<String, dynamic> _assessmentData = {};
   
   // Create a list of GlobalKeys for our custom StepState
@@ -26,6 +30,14 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
     GlobalKey<AssessmentStepState>(),
   ];
 
+  final List<String> _stepTitles = ["Info", "Diet", "Lifestyle", "History"];
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   void _updateAssessmentData(Map<String, dynamic> data) {
     setState(() {
       _assessmentData.addAll(data);
@@ -33,14 +45,18 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
   }
 
   void _onStepContinue() {
-    // a boolean that will be true if all is good
     final isStepValid = _stepKeys[_currentStep].currentState?.validateAndSave() ?? false;
     
     if (isStepValid) {
-       if (_currentStep < 3) { // 3 is the last index of a 4-step form
+       if (_currentStep < _stepKeys.length - 1) {
         setState(() {
-          _currentStep += 1;
+          _currentStep++;
         });
+        _pageController.animateToPage(
+          _currentStep,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
       } else {
         _submitAssessment();
       }
@@ -50,8 +66,13 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
   void _onStepCancel() {
     if (_currentStep > 0) {
       setState(() {
-        _currentStep -= 1;
+        _currentStep--;
       });
+       _pageController.animateToPage(
+          _currentStep,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
     }
   }
 
@@ -67,39 +88,11 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // List of step widgets
-    final List<Widget> stepContents = [
+    final List<Widget> stepPages = [
       Step1Demographics(key: _stepKeys[0], onCompleted: _updateAssessmentData),
       Step2Diet(key: _stepKeys[1], onCompleted: _updateAssessmentData),
       Step3Lifestyle(key: _stepKeys[2], onCompleted: _updateAssessmentData),
       Step4MedicalHistory(key: _stepKeys[3], onCompleted: _updateAssessmentData),
-    ];
-    
-    List<Step> steps = [
-      Step(
-        title: const Text('Info'),
-        content: stepContents[0],
-        isActive: _currentStep >= 0,
-        state: _currentStep > 0 ? StepState.complete : StepState.indexed,
-      ),
-      Step(
-        title: const Text('Diet'),
-        content: stepContents[1],
-        isActive: _currentStep >= 1,
-        state: _currentStep > 1 ? StepState.complete : StepState.indexed,
-      ),
-      Step(
-        title: const Text('Lifestyle'),
-        content: stepContents[2],
-        isActive: _currentStep >= 2,
-        state: _currentStep > 2 ? StepState.complete : StepState.indexed,
-      ),
-      Step(
-        title: const Text('History'),
-        content: stepContents[3],
-        isActive: _currentStep >= 3,
-        state: _currentStep >= 3 ? StepState.complete : StepState.indexed,
-      ),
     ];
 
     return Scaffold(
@@ -112,37 +105,53 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
               )
             : null,
       ),
-      body: Stepper(
-        type: StepperType.horizontal,
-        currentStep: _currentStep,
-        onStepContinue: _onStepContinue,
-        onStepCancel: _onStepCancel,
-        controlsBuilder: (BuildContext context, ControlsDetails details) {
-          return Padding(
-            padding: const EdgeInsets.only(top: 16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: <Widget>[
-                if (_currentStep > 0)
-                  TextButton(
-                    onPressed: details.onStepCancel,
-                    child: const Text('BACK'),
-                  ),
-                const SizedBox(width: 12),
-                ElevatedButton(
-                  onPressed: details.onStepContinue,
-                  child: Text(_currentStep == steps.length - 1 ? 'SUBMIT' : 'NEXT'),
-                ),
-              ],
+      body: Column(
+        children: [
+          CustomStepper(
+            currentStep: _currentStep,
+            steps: _stepTitles,
+          ),
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              children: stepPages,
             ),
-          );
-        },
-        steps: steps,
+          ),
+        ],
+      ),
+       bottomNavigationBar: _buildNavigation(),
+    );
+  }
+
+  Widget _buildNavigation() {
+    bool isLastStep = _currentStep == _stepKeys.length - 1;
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          if (_currentStep > 0)
+            TextButton(
+              onPressed: _onStepCancel,
+              child: const Text('BACK'),
+            ),
+          if (_currentStep == 0)
+            const SizedBox(), // To keep spacing consistent
+          
+          Expanded(
+            child: GradientButton(
+              onPressed: _onStepContinue,
+              text: isLastStep ? 'SUBMIT' : 'NEXT',
+              gradient: isLastStep ? AppTheme.primaryGradient : AppTheme.secondaryGradient,
+              icon: isLastStep ? Icons.check_circle_outline : Icons.arrow_forward,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
-
 
 // Abstract class for Step states to enforce a common interface
 abstract class _StepState<T extends StatefulWidget> extends State<T> {

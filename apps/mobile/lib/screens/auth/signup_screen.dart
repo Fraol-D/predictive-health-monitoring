@@ -108,8 +108,9 @@ class _SignupScreenState extends State<SignupScreen> {
         const SizedBox(height: 32.0),
         GradientButton(
           text: 'Register with Email',
-          onPressed: _signupWithEmail,
-          isLoading: _isLoading,
+          onPressed: _isLoading ? () {} : _signupWithEmail,
+          gradient: AppTheme.secondaryGradient,
+          icon: Icons.email,
         ),
         const SizedBox(height: 24.0),
         const Row(
@@ -166,6 +167,8 @@ class _SignupScreenState extends State<SignupScreen> {
              const SizedBox(height: 32),
             GradientButton(
                 text: 'Back to Login',
+                gradient: AppTheme.secondaryGradient,
+                icon: Icons.arrow_back,
                 onPressed: () {
                     Navigator.of(context).pop();
                 },

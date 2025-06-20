@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import PageLayout from '@/components/layout/page-layout';
 import { Bot, User, Send, Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // Define a message type
 interface Message {
@@ -100,7 +102,11 @@ const ChatPage = () => {
                     : 'bg-card/80 backdrop-blur-md text-foreground rounded-bl-none'
                 }`}
               >
-                <p className="text-sm leading-relaxed">{message.text}</p>
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {message.text}
+                  </ReactMarkdown>
+                </div>
               </div>
                {message.sender === 'user' && (
                 <div className="w-10 h-10 rounded-full bg-card/80 flex items-center justify-center text-muted-foreground flex-shrink-0">
@@ -125,6 +131,14 @@ const ChatPage = () => {
 
         {/* Chat Input */}
         <div className="p-4 bg-card/80 backdrop-blur-md rounded-b-xl border-t-0 border border-border/20">
+          {messages.length <= 1 && (
+              <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-2">
+                <button onClick={() => setInput('Get my health risk')} className="p-3 rounded-lg bg-background/70 border border-border/50 text-sm text-left">Get my health risk</button>
+                <button onClick={() => setInput('Show my last assessment')} className="p-3 rounded-lg bg-background/70 border border-border/50 text-sm text-left">Show my last assessment</button>
+                <button onClick={() => setInput('Give health tips')} className="p-3 rounded-lg bg-background/70 border border-border/50 text-sm text-left">Give health tips</button>
+                <button onClick={() => setInput('Explain my results')} className="p-3 rounded-lg bg-background/70 border border-border/50 text-sm text-left">Explain my results</button>
+              </div>
+            )}
           <div className="flex items-center gap-4">
               <input
                 type="text"

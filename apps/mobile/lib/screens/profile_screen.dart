@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:predictive_health_monitoring/screens/data_sharing_screen.dart';
 import 'package:predictive_health_monitoring/widgets/common/gradient_button.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -46,9 +47,17 @@ class ProfileScreen extends StatelessWidget {
                   title: 'Account Details',
                   onTap: () {},
                 ),
-                _buildSwitchTile(
+                _buildListTile(
                   context,
                   icon: Icons.share_outlined,
+                  title: 'Share Your Data',
+                  onTap: () {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => const DataSharingScreen()));
+                  },
+                ),
+                _buildSwitchTile(
+                  context,
+                  icon: Icons.notifications_active_outlined,
                   title: 'Anonymous Data Sharing',
                   subtitle: 'Help improve our prediction models',
                   value: true, // Mock value

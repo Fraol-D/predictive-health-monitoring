@@ -4,65 +4,57 @@ import 'package:predictive_health_monitoring/theme/app_theme.dart';
 class GradientButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
-  final Gradient? gradient;
-  final bool isLoading;
+  final Gradient gradient;
+  final IconData? icon;
 
   const GradientButton({
     super.key,
     required this.text,
     required this.onPressed,
-    this.gradient,
-    this.isLoading = false,
+    required this.gradient,
+    this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
-    final buttonGradient = gradient ?? AppTheme.secondaryGradient;
-    // Determine shadow color from the gradient's end color
-    final shadowColor = (buttonGradient is LinearGradient) 
-      ? buttonGradient.colors.last.withOpacity(0.4)
-      : Colors.transparent;
-
     return Container(
       decoration: BoxDecoration(
-        gradient: buttonGradient,
-        borderRadius: BorderRadius.circular(12.0),
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(8.0),
         boxShadow: [
           BoxShadow(
-            color: shadowColor,
-            blurRadius: 15,
-            spreadRadius: -5,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.15),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: isLoading ? null : onPressed,
-          borderRadius: BorderRadius.circular(12.0),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-            child: Center(
-              child: isLoading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : Text(
-                      text,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, color: Colors.white),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              text,
+              style: const TextStyle(
+                fontFamily: AppTheme.fontSans,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.white,
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

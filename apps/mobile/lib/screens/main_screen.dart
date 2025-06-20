@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:predictive_health_monitoring/screens/assessment/assessment_screen.dart';
+import 'package:predictive_health_monitoring/screens/chat_screen.dart';
 import 'package:predictive_health_monitoring/screens/home_screen.dart';
 import 'package:predictive_health_monitoring/screens/notifications_screen.dart';
 import 'package:predictive_health_monitoring/screens/profile_screen.dart';
@@ -20,6 +21,7 @@ class _MainScreenState extends State<MainScreen> {
   static final List<Widget> _widgetOptions = <Widget>[
     const HomeScreen(),
     const AssessmentScreen(),
+    const ChatScreen(),
     const ReportsScreen(),
     const RecommendationsScreen(),
     const NotificationsScreen(),
@@ -56,6 +58,11 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.health_and_safety_outlined),
             activeIcon: Icon(Icons.health_and_safety),
             label: 'Assess',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            activeIcon: Icon(Icons.chat_bubble),
+            label: 'Chat',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.analytics_outlined),
