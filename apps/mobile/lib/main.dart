@@ -9,6 +9,7 @@ import 'package:predictive_health_monitoring/firebase_options.dart';
 import 'package:predictive_health_monitoring/screens/assessment/assessment_screen.dart';
 import 'package:predictive_health_monitoring/screens/auth_gate.dart';
 import 'package:predictive_health_monitoring/services/auth_service.dart';
+import 'package:predictive_health_monitoring/services/gemini_service.dart';
 
 // The firebase_options.dart file is no longer used, we will use .env for secrets.
 // import 'firebase_options.dart';
@@ -36,6 +37,15 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
         Provider<AuthService>(create: (_) => AuthService()),
+        Provider<GeminiService>(
+          create: (_) {
+            final apiKey = dotenv.env['GEMINI_API_KEY'];
+            if (apiKey == null || apiKey.isEmpty) {
+              throw Exception('GEMINI_API_KEY is not set in the .env file');
+            }
+            return GeminiService(apiKey: apiKey);
+          },
+        ),
       ],
       child: const MyApp(),
     ),

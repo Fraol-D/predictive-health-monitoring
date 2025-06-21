@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GeminiService {
-  static const String _apiKey = 'AIzaSyCDxRePxoKeOgODUwd3OMWyK0tv2Tx4Oj8';
+  final String _apiKey;
   static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'; // Example: Using gemini-pro
 
-  Future<Map<String, dynamic>> generateContent(String prompt) async {
+  GeminiService({required String apiKey}) : _apiKey = apiKey;
+
+  Future<String> generateContent(String prompt) async {
     final url = Uri.parse('$_baseUrl?key=$_apiKey');
     
     final requestBody = {
@@ -26,7 +28,18 @@ class GeminiService {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        final decodedResponse = jsonDecode(response.body);
+        // Extract the text from the response based on Gemini API structure
+        if (decodedResponse.containsKey('candidates') &&
+            (decodedResponse['candidates'] as List).isNotEmpty &&
+            decodedResponse['candidates'][0].containsKey('content') &&
+            decodedResponse['candidates'][0]['content'].containsKey('parts') &&
+            (decodedResponse['candidates'][0]['content']['parts'] as List).isNotEmpty &&
+            decodedResponse['candidates'][0]['content']['parts'][0].containsKey('text')) {
+          return decodedResponse['candidates'][0]['content']['parts'][0]['text'] as String;
+        } else {
+          throw Exception('Failed to extract content from Gemini response.');
+        }
       } else {
         // Consider more robust error handling: logging, custom exceptions
         print('Gemini API Error: ${response.statusCode}');

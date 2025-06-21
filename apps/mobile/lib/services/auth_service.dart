@@ -20,10 +20,15 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    return await _firebaseAuth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      return await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } on FirebaseAuthException catch (e) {
+      // Re-throw a more specific exception to be handled by the UI
+      throw _handleAuthException(e);
+    }
   }
 
   // Sign in with email and password
@@ -31,10 +36,23 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    return await _firebaseAuth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      return await _firebaseAuth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  // Password Reset
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
   }
 
   // Sign in with Google
@@ -61,7 +79,7 @@ class AuthService {
     } catch (e) {
       // TODO: Add more robust error handling
       print('Error during Google sign-in: $e');
-      return null;
+      rethrow;
     }
   }
 
@@ -72,6 +90,25 @@ class AuthService {
       await _firebaseAuth.signOut();
     } catch (e) {
       print('Error signing out: $e');
+      rethrow;
+    }
+  }
+
+  // Helper method to convert FirebaseAuthException into a readable message
+  String _handleAuthException(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'weak-password':
+        return 'The password provided is too weak.';
+      case 'email-already-in-use':
+        return 'An account already exists for that email.';
+      case 'user-not-found':
+        return 'No user found for that email.';
+      case 'wrong-password':
+        return 'Wrong password provided for that user.';
+      case 'invalid-email':
+        return 'The email address is not valid.';
+      default:
+        return 'An unknown error occurred. Please try again.';
     }
   }
 }

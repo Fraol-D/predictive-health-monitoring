@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class SocialButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color backgroundColor;
   final Color textColor;
   // final IconData iconData; // To be added later
@@ -10,7 +10,7 @@ class SocialButton extends StatelessWidget {
   const SocialButton({
     super.key,
     required this.text,
-    required this.onPressed,
+    this.onPressed,
     this.backgroundColor = Colors.white,
     this.textColor = Colors.black,
     // required this.iconData,

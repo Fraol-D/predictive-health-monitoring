@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:predictive_health_monitoring/services/auth_service.dart';
 import 'package:predictive_health_monitoring/theme/app_theme.dart';
 import 'package:predictive_health_monitoring/widgets/common/gradient_button.dart';
 import 'package:predictive_health_monitoring/widgets/common/social_button.dart';
-import 'package:predictive_health_monitoring/screens/auth/login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -30,12 +30,16 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _signupWithEmail() async {
-    if (_passwordController.text.isEmpty || _emailController.text.isEmpty || _nameController.text.isEmpty) {
-        setState(() {
-            _errorMessage = "Please fill all fields.";
-        });
-        return;
+    if (_passwordController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _nameController.text.isEmpty) {
+      setState(() {
+        _errorMessage = "Please fill all fields.";
+      });
+      return;
     }
+
+    final authService = Provider.of<AuthService>(context, listen: false);
 
     setState(() {
       _isLoading = true;
@@ -43,30 +47,84 @@ class _SignupScreenState extends State<SignupScreen> {
     });
 
     try {
-      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final credential = await authService.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      await credential.user?.updateDisplayName(_nameController.text.trim());
-      await credential.user?.sendEmailVerification();
-      
-      setState(() {
-          _uiState = 'verifyEmail';
-          _isLoading = false;
-      });
+      // We are not using the credential directly, but you could if needed
+      // For example, to link accounts or save user data to Firestore
+      // For now, AuthGate will handle navigation after state change.
 
-    } on FirebaseAuthException catch (e) {
       setState(() {
-        _errorMessage = e.message ?? 'An unknown error occurred.';
+        // This is a placeholder for email verification UI.
+        // In a real app, you might navigate to a dedicated "please verify" screen
+        // or handle it within the AuthGate.
+        _uiState = 'verifyEmail';
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
         _isLoading = false;
       });
     }
   }
 
   Future<void> _signUpWithGoogle() async {
-    // Implement Google Sign-In logic here later
-    // This should lead to the phone verification step.
+    final authService = Provider.of<AuthService>(context, listen: false);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final userCredential = await authService.signInWithGoogle();
+      if (userCredential != null) {
+        // After Google sign-in, proceed to phone verification step
+        setState(() {
+          _uiState = 'verifyPhone';
+          _isLoading = false;
+        });
+      } else {
+        // User cancelled Google sign-in
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to sign up with Google. Please try again.';
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _buildCurrentUI(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCurrentUI() {
+    switch (_uiState) {
+      case 'verifyEmail':
+        return _buildVerifyEmailUI();
+      case 'verifyPhone':
+        return _buildVerifyPhoneUI();
+      case 'register':
+      default:
+        return _buildRegisterUI();
+    }
   }
 
   Widget _buildRegisterUI() {
@@ -96,7 +154,8 @@ class _SignupScreenState extends State<SignupScreen> {
             padding: const EdgeInsets.only(bottom: 16.0),
             child: Text(
               _errorMessage!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 14),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.error, fontSize: 14),
               textAlign: TextAlign.center,
             ),
           ),
@@ -126,19 +185,22 @@ class _SignupScreenState extends State<SignupScreen> {
         const SizedBox(height: 24.0),
         SocialButton(
           text: 'Sign up with Google',
-          onPressed: _signUpWithGoogle,
-          // Add Google icon
+          onPressed: _isLoading ? null : () { _signUpWithGoogle(); },
         ),
         const SizedBox(height: 48.0),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("Already have an account?", style: Theme.of(context).textTheme.bodyMedium),
+            Text("Already have an account?",
+                style: Theme.of(context).textTheme.bodyMedium),
             TextButton(
               onPressed: () {
-                 Navigator.of(context).pop();
+                Navigator.of(context).pop();
               },
-              child: Text('Log In', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
+              child: Text('Log In',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -146,46 +208,87 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-    Widget _buildVerifyEmailUI() {
+  Widget _buildVerifyEmailUI() {
     return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-            Icon(Icons.email_outlined, size: 80, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 24),
-            Text(
-                'Verify Your Email',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Text(
-                'A verification link has been sent to your email address. Please check your inbox and click the link to continue.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge,
-            ),
-             const SizedBox(height: 32),
-            GradientButton(
-                text: 'Back to Login',
-                gradient: AppTheme.secondaryGradient,
-                icon: Icons.arrow_back,
-                onPressed: () {
-                    Navigator.of(context).pop();
-                },
-            ),
-        ],
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Icon(Icons.email_outlined,
+            size: 80, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(height: 24),
+        Text(
+          'Verify Your Email',
+          textAlign: TextAlign.center,
+          style: Theme.of(context)
+              .textTheme
+              .headlineMedium
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'A verification link has been sent to your email address. Please check your inbox and click the link to continue.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+        const SizedBox(height: 32),
+        GradientButton(
+          text: 'Back to Login',
+          gradient: AppTheme.secondaryGradient,
+          icon: Icons.arrow_back,
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ],
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: _uiState == 'register' ? _buildRegisterUI() : _buildVerifyEmailUI(),
+  Widget _buildVerifyPhoneUI() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Icon(Icons.phone_android_outlined,
+            size: 80, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(height: 24),
+        Text(
+          'Add Your Phone Number',
+          textAlign: TextAlign.center,
+          style: Theme.of(context)
+              .textTheme
+              .headlineMedium
+              ?.copyWith(fontWeight: FontWeight.bold),
         ),
-      ),
+        const SizedBox(height: 16),
+        Text(
+          'For your security, please add and verify your phone number for Multi-Factor Authentication (MFA).',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+        const SizedBox(height: 32.0),
+        TextFormField(
+          decoration: const InputDecoration(
+            labelText: 'Phone Number',
+            prefixIcon: Icon(Icons.phone),
+          ),
+          keyboardType: TextInputType.phone,
+        ),
+        const SizedBox(height: 24.0),
+        GradientButton(
+          text: 'Send Verification Code',
+          gradient: AppTheme.primaryGradient,
+          icon: Icons.send,
+          onPressed: () {
+            // TODO: Implement phone number verification logic
+            // This would involve calling a Firebase function or service
+            // For now, we'll just simulate success and go back to login
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text(
+                    'Phone verification not implemented yet. Returning to login.')));
+            Navigator.of(context).pop();
+          },
+        ),
+      ],
     );
   }
 
@@ -194,7 +297,8 @@ class _SignupScreenState extends State<SignupScreen> {
       controller: _nameController,
       decoration: InputDecoration(
         labelText: 'Full Name',
-        prefixIcon: Icon(Icons.person_outline, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        prefixIcon: Icon(Icons.person_outline,
+            color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     );
   }
@@ -204,7 +308,8 @@ class _SignupScreenState extends State<SignupScreen> {
       controller: _emailController,
       decoration: InputDecoration(
         labelText: 'Email Address',
-        prefixIcon: Icon(Icons.mail_outline, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        prefixIcon: Icon(Icons.mail_outline,
+            color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
       keyboardType: TextInputType.emailAddress,
     );
@@ -215,7 +320,8 @@ class _SignupScreenState extends State<SignupScreen> {
       controller: _passwordController,
       decoration: InputDecoration(
         labelText: 'Password',
-        prefixIcon: Icon(Icons.lock_outline, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        prefixIcon: Icon(Icons.lock_outline,
+            color: Theme.of(context).colorScheme.onSurfaceVariant),
         suffixIcon: IconButton(
           icon: Icon(
             _showPassword ? Icons.visibility_off : Icons.visibility,
