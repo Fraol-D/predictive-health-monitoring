@@ -2,9 +2,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import PageLayout from '@/components/layout/page-layout';
-import { Bot, User, Send, Loader2 } from 'lucide-react';
+import { Bot, User, Send, Loader2, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Button } from '@/components/ui/button';
 
 // Define a message type
 interface Message {
@@ -13,13 +14,31 @@ interface Message {
   sender: 'user' | 'ai';
 }
 
+const starterPrompts = [
+  {
+    icon: 'restaurant_menu',
+    text: "Prepare me a meal plan",
+  },
+  {
+    icon: 'fitness_center',
+    text: "Give me a weekly exercise guide",
+  },
+  {
+    icon: 'analytics_outlined',
+    text: "Analyze my last assessment",
+  },
+  {
+    icon: 'show_chart',
+    text: "Show my health trends",
+  },
+];
+
 const ChatPage = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    { id: 'init-1', text: "Hello! I'm your AI Health Assistant. How can I help you today?", sender: 'ai' }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
+  const isConversationStarted = messages.length > 0;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -29,17 +48,17 @@ const ChatPage = () => {
     scrollToBottom();
   }, [messages, isLoading]);
 
-  const handleSendMessage = async () => {
-    if (input.trim() === '' || isLoading) return;
+  const handleSendMessage = async (prompt?: string) => {
+    const messageToSend = prompt || input;
+    if (messageToSend.trim() === '' || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString() + '-user',
-      text: input,
+      text: messageToSend,
       sender: 'user',
     };
     
     setMessages((prevMessages) => [...prevMessages, userMessage]);
-    const currentInput = input;
     setInput('');
     setIsLoading(true);
 
@@ -50,8 +69,8 @@ const ChatPage = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          message: currentInput,
-          history: messages 
+          message: messageToSend,
+          history: messages // Sending history for context
         }),
       });
 
@@ -83,79 +102,100 @@ const ChatPage = () => {
 
   return (
     <PageLayout>
-      <div className="flex flex-col h-[calc(100vh-12rem)] max-w-4xl mx-auto w-full">
-        {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto space-y-6 p-6 bg-card/50 backdrop-blur-sm rounded-t-xl border border-border/20">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex items-start gap-4 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              {message.sender === 'ai' && (
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
-                  <Bot className="w-6 h-6" />
+      <div className="flex flex-col h-[calc(100vh-8rem)] w-full max-w-4xl mx-auto">
+        <div className={`flex-1 overflow-y-auto p-6 ${!isConversationStarted ? 'flex items-center justify-center' : ''}`}>
+          {!isConversationStarted ? (
+            <div className="text-center">
+                <div className="inline-block p-4 bg-primary/10 rounded-full mb-4">
+                    <Sparkles className="w-10 h-10 text-primary" />
                 </div>
-              )}
-              <div className={`max-w-[80%] p-4 rounded-xl shadow-md ${
-                  message.sender === 'user'
-                    ? 'bg-primary/90 text-primary-foreground rounded-br-none'
-                    : 'bg-card/80 backdrop-blur-md text-foreground rounded-bl-none'
-                }`}
-              >
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {message.text}
-                  </ReactMarkdown>
-                </div>
+              <h1 className="text-3xl font-bold mb-2">AI Health Assistant</h1>
+              <p className="text-muted-foreground mb-8">How can I help you today?</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                {starterPrompts.map((prompt) => (
+                   <Button
+                    key={prompt.text}
+                    variant="outline"
+                    className="h-auto w-full text-left justify-start p-4"
+                    onClick={() => handleSendMessage(prompt.text)}
+                  >
+                    <span className="text-xl mr-4">{prompt.icon}</span>
+                    <span>{prompt.text}</span>
+                  </Button>
+                ))}
               </div>
-               {message.sender === 'user' && (
-                <div className="w-10 h-10 rounded-full bg-card/80 flex items-center justify-center text-muted-foreground flex-shrink-0">
-                  <User className="w-6 h-6" />
-                </div>
-              )}
             </div>
-          ))}
-          {isLoading && (
-            <div className="flex items-start gap-4 justify-start">
-               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
-                  <Bot className="w-6 h-6" />
+          ) : (
+            <div className="space-y-6">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex items-start gap-4 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  {message.sender === 'ai' && (
+                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
+                      <Bot className="w-6 h-6" />
+                    </div>
+                  )}
+                  <div className={`max-w-[80%] p-4 rounded-xl shadow-md ${
+                      message.sender === 'user'
+                        ? 'bg-primary/90 text-primary-foreground rounded-br-none'
+                        : 'bg-card/80 backdrop-blur-md text-foreground rounded-bl-none'
+                    }`}
+                  >
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {message.text}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                   {message.sender === 'user' && (
+                    <div className="w-10 h-10 rounded-full bg-card/80 flex items-center justify-center text-muted-foreground flex-shrink-0">
+                      <User className="w-6 h-6" />
+                    </div>
+                  )}
                 </div>
-              <div className="max-w-[80%] p-4 rounded-xl shadow-md bg-card/80 backdrop-blur-md text-foreground rounded-bl-none flex items-center space-x-2">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span className="text-sm text-muted-foreground">AI is thinking...</span>
-              </div>
+              ))}
+              {isLoading && (
+                <div className="flex items-start gap-4 justify-start">
+                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
+                      <Bot className="w-6 h-6" />
+                    </div>
+                  <div className="max-w-[80%] p-4 rounded-xl shadow-md bg-card/80 backdrop-blur-md text-foreground rounded-bl-none flex items-center space-x-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span className="text-sm text-muted-foreground">AI is thinking...</span>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
             </div>
           )}
-           <div ref={messagesEndRef} />
         </div>
 
         {/* Chat Input */}
-        <div className="p-4 bg-card/80 backdrop-blur-md rounded-b-xl border-t-0 border border-border/20">
-          {messages.length <= 1 && (
-              <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-2">
-                <button onClick={() => setInput('Get my health risk')} className="p-3 rounded-lg bg-background/70 border border-border/50 text-sm text-left">Get my health risk</button>
-                <button onClick={() => setInput('Show my last assessment')} className="p-3 rounded-lg bg-background/70 border border-border/50 text-sm text-left">Show my last assessment</button>
-                <button onClick={() => setInput('Give health tips')} className="p-3 rounded-lg bg-background/70 border border-border/50 text-sm text-left">Give health tips</button>
-                <button onClick={() => setInput('Explain my results')} className="p-3 rounded-lg bg-background/70 border border-border/50 text-sm text-left">Explain my results</button>
-              </div>
-            )}
-          <div className="flex items-center gap-4">
-              <input
-                type="text"
+        <div className={`w-full max-w-4xl mx-auto p-4 ${isConversationStarted ? 'sticky bottom-0 bg-background/80 backdrop-blur-md' : ''}`}>
+           <div className="relative">
+              <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                    }
+                }}
                 placeholder="Ask the AI Health Assistant..."
-                className="w-full px-4 py-3 rounded-lg bg-background/70 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50 text-base"
+                className="w-full px-4 py-3 pr-16 rounded-lg bg-background/70 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50 text-base resize-none"
+                rows={1}
                 disabled={isLoading}
               />
-            <button
-              onClick={handleSendMessage}
-              className="p-3 rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 shadow-lg transform hover:scale-105"
+            <Button
+              onClick={() => handleSendMessage()}
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 p-0"
               disabled={!input.trim() || isLoading}
             >
-              <Send className="w-6 h-6" />
-            </button>
+              <Send className="w-5 h-5" />
+            </Button>
           </div>
            <p className="text-xs text-muted-foreground mt-2 text-center">
               AI assistant is for informational purposes only. Always consult a healthcare professional for medical advice.

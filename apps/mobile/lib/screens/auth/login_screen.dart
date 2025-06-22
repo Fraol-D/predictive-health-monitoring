@@ -101,9 +101,9 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: () async {
                 if (emailController.text.trim().isEmpty) {
                   // Optionally show an error in the dialog
-                  return;
-                }
-                try {
+      return;
+    }
+    try {
                   await authService.sendPasswordResetEmail(
                       email: emailController.text.trim());
                   Navigator.of(dialogContext).pop();
@@ -114,10 +114,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   );
                 } catch (e) {
                   Navigator.of(dialogContext).pop();
-                  setState(() {
+      setState(() {
                     _errorMessage = e.toString();
-                  });
-                }
+      });
+    }
               },
             ),
           ],
@@ -167,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
               _buildEmailField(),
               const SizedBox(height: 16.0),
               _buildPasswordField(),
-              Align(
+               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () => _resetPassword(context),

@@ -1,9 +1,17 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
 const PORT = process.env.PORT || 3001; // Backend will run on port 3001 by default
+
+// Initialize Google Generative AI
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error('GEMINI_API_KEY is not set in the .env file');
+}
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-pro"});
 
 // Middlewares
 app.use(cors()); // Enable CORS for all routes
@@ -15,7 +23,7 @@ app.get('/', (req, res) => {
 });
 
 // API endpoint for chat
-app.post('/api/chat', (req, res) => {
+app.post('/api/chat', async (req, res) => {
   const { message } = req.body;
 
   if (!message) {
@@ -24,16 +32,19 @@ app.post('/api/chat', (req, res) => {
 
   console.log('Received user message:', message);
 
-  // Mock AI response for now
-  const aiResponse = `Backend received: "${message}". AI is thinking...`;
-  
-  // Simulate a delay for AI processing
-  setTimeout(() => {
+  try {
+    const result = await model.generateContent(message);
+    const response = await result.response;
+    const aiResponse = await response.text();
+    
     res.json({ 
       reply: aiResponse,
       timestamp: new Date() 
     });
-  }, 1000);
+  } catch (error) {
+    console.error('Error calling Gemini API:', error);
+    res.status(500).json({ error: 'Failed to get response from AI.' });
+  }
 });
 
 app.listen(PORT, () => {

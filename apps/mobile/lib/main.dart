@@ -38,13 +38,9 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
         Provider<AuthService>(create: (_) => AuthService()),
         Provider<GeminiService>(
-          create: (_) {
-            final apiKey = dotenv.env['GEMINI_API_KEY'];
-            if (apiKey == null || apiKey.isEmpty) {
-              throw Exception('GEMINI_API_KEY is not set in the .env file');
-            }
-            return GeminiService(apiKey: apiKey);
-          },
+          // The API key is no longer needed here as the service will communicate
+          // with the local backend instead of Google's API directly.
+          create: (_) => GeminiService(),
         ),
       ],
       child: const MyApp(),
