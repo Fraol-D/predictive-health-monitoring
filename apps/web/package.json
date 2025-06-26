@@ -10,7 +10,11 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@radix-ui/react-checkbox": "^1.3.2",
     "@radix-ui/react-icons": "^1.3.0",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-switch": "^1.2.5",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "firebase": "^11.9.0",
     "framer-motion": "^11.2.10",
@@ -30,13 +34,15 @@
     "@types/node": "^20",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "autoprefixer": "^10.4.21",
-    "eslint": "^8.56.0",
-    "eslint-config-next": "14.2.4",
+    "@types/uuid": "^9.0.8",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.3",
     "postcss": "^8",
     "style-loader": "^4.0.0",
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5"
+    "typescript": "^5",
+    "uuid": "^9.0.1"
   }
 }

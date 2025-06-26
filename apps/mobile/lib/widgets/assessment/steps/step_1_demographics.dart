@@ -83,7 +83,7 @@ class _Step1DemographicsState extends AssessmentStepState<Step1Demographics> {
               labelText: 'Gender',
               prefixIcon: Icon(Icons.wc_outlined),
             ),
-            items: ['Male', 'Female']
+            items: ['Male', 'Female', 'Other']
                 .map((label) => DropdownMenuItem(
                       value: label,
                       child: Text(label),

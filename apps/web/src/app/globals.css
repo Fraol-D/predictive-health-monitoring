@@ -2,98 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --radius: 0.5rem; /* Default border radius */
+@layer base {
+  :root {
+    --radius: 0.5rem; /* Default border radius */
 
-  /* Light Theme Variables */
-  --background: 249 250 251;   /* Very Light Gray (#F9FAFB) */
-  --foreground: 51 51 51;     /* Dark Charcoal */
-  --card: 255 255 255;       /* Pure White (#FFFFFF) */
-  --primary: 0 167 157;      /* Vibrant Teal */
-  --accent: 255 140 66;     /* Warm Orange */
+    /* Light Theme Variables - Official Palette */
+    --background: 248 250 252;   /* almost white, light cool gray */
+    --foreground: 15 23 42;     /* slate-900 */
+    --card: 255 255 255;       /* Pure White */
+    --primary: 168 85 247;      /* purple-500 */
+    --accent: 236 72 153;     /* pink-500 */
+    
+    --primary-foreground: 255 255 255; 
+    --secondary: 241 245 249; /* slate-100 */
+    --secondary-foreground: 15 23 42; /* slate-900 */
+    --destructive: 220 38 38; /* red-600 */
+    --destructive-foreground: 248 250 252; 
+    --border: 226 232 240; /* slate-200 */
+    --input: 226 232 240; /* slate-200 */
+    --ring: 168 85 247; /* purple-500 */
+    --muted: 241 245 249; /* slate-100 */
+    --muted-foreground: 100 116 139; /* slate-500 */
+    --accent-foreground: 255 255 255;
+    --popover: 255 255 255;
+    --popover-foreground: 15 23 42;
+    --card-foreground: 15 23 42;
+  }
 
-  /* Other light theme variables from Tailwind for completeness (can be adjusted) */
-  --primary-foreground: 255 255 255; /* White - for text on primary */
-  --secondary: 240 240 240; /* example light gray */
-  --secondary-foreground: 17 24 39; /* example dark gray */
-  --destructive: 239 68 68; /* red-500 */
-  --destructive-foreground: 255 255 255; /* white */
-  --border: 229 231 235; /* gray-200 */
-  --input: 209 213 219; /* gray-300 */
-  --ring: 0 167 157; /* Vibrant Teal - for focus rings */
-  --muted: 243 244 246; /* gray-100 */
-  --muted-foreground: 107 114 128; /* gray-500 */
-  --accent-foreground: 255 255 255; /* White - for text on accent */
-  --popover: 255 255 255; /* white */
-  --popover-foreground: 51 51 51; /* Dark Charcoal */
-  --card-foreground: 51 51 51; /* Dark Charcoal */
+  .dark {
+    /* Dark Theme Variables - Official Palette */
+    --background: 15 23 42;      /* slate-900 */
+    --foreground: 226 232 240;    /* slate-200 */
+    --card: 30 41 59;          /* slate-800 */
+    --primary: 192 132 252;       /* purple-400 */
+    --accent: 249 115 222;      /* pink-400 */
+
+    --primary-foreground: 15 23 42; /* slate-900 */
+    --secondary: 51 65 85; /* slate-700 */
+    --secondary-foreground: 226 232 240; /* slate-200 */
+    --destructive: 185 28 28; /* red-700 */
+    --destructive-foreground: 226 232 240; /* slate-200 */
+    --border: 51 65 85; /* slate-700 */
+    --input: 51 65 85; /* slate-700 */
+    --ring: 192 132 252; /* purple-400 */
+    --muted: 51 65 85; /* slate-700 */
+    --muted-foreground: 148 163 184; /* slate-400 */
+    --accent-foreground: 15 23 42; 
+    --popover: 30 41 59; /* slate-800 */
+    --popover-foreground: 226 232 240; /* slate-200 */
+    --card-foreground: 226 232 240; /* slate-200 */
+  }
 }
 
-.dark {
-  /* Dark Theme Variables */
-  --background: 26 32 44;      /* Rich Dark Blue */
-  --foreground: 226 232 240;    /* Light Gray/Off-White */
-  --card: 45 55 72;          /* Darker Gray-Blue */
-  --primary: 0 188 212;       /* Bright Cyan */
-  --accent: 167 139 250;      /* Soft Purple */
-
-  /* Other dark theme variables from Tailwind for completeness (can be adjusted) */
-  --primary-foreground: 26 32 44; /* Rich Dark Blue - for text on primary */
-  --secondary: 55 65 81; /* example dark gray */
-  --secondary-foreground: 226 232 240; /* Light Gray/Off-White */
-  --destructive: 185 28 28; /* red-700 */
-  --destructive-foreground: 226 232 240; /* Light Gray/Off-White */
-  --border: 75 85 99; /* gray-600 */
-  --input: 55 65 81; /* gray-700 */
-  --ring: 0 188 212; /* Bright Cyan - for focus rings */
-  --muted: 55 65 81; /* gray-700 */
-  --muted-foreground: 156 163 175; /* gray-400 */
-  --accent-foreground: 26 32 44; /* Rich Dark Blue - for text on accent */
-  --popover: 26 32 44; /* Rich Dark Blue */
-  --popover-foreground: 226 232 240; /* Light Gray/Off-White */
-  --card-foreground: 226 232 240; /* Light Gray/Off-White */
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
-body {
-  color: rgb(var(--foreground));
-  background: rgb(var(--background));
-  font-family: Arial, Helvetica, sans-serif; /* Consider using Geist font vars from layout.tsx */
+/* Custom Scrollbar for Webkit browsers */
+.sidebar-scroll-container::-webkit-scrollbar {
+  width: 6px;
 }
 
-/* Custom Scrollbar Styles */
-.scrollbar-thin {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--primary) / 0.4) transparent;
-}
-
-.scrollbar-thin::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-track {
+.sidebar-scroll-container::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--primary) / 0.4);
-  border-radius: 20px;
-  border: 2px solid transparent;
-  background-clip: content-box;
+.sidebar-scroll-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #a13de0, #ff5177);
+  border-radius: 10px;
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: hsl(var(--primary) / 0.6);
-}
-
-@layer components {
-  /* Green-to-blue gradient for primary actions like Login, Sign Up, Send Message */
-  .btn-gradient-primary {
-    @apply bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 ease-in-out;
-  }
-
-  /* Purple-to-pink gradient for secondary/special actions like Google Sign-in, Start Assessment */
-  .btn-gradient-secondary {
-    @apply bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 ease-in-out;
-  }
+.sidebar-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #8a2fbd, #e63961);
 }

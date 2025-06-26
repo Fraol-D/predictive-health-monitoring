@@ -136,9 +136,8 @@ class ReportDetailsScreen extends StatelessWidget {
                           showTitles: true,
                           getTitlesWidget: (double value, TitleMeta meta) {
                             final categories = report.detailedReport['chartsData']['categoryBreakdown'] as List;
-                            return SideTitleWidget(
-                              axisSide: meta.axisSide,
-                              space: 8.0,
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
                               child: Text(categories[value.toInt()]['name'], style: const TextStyle(fontSize: 10)),
                             );
                           },

@@ -6,7 +6,7 @@ import PageLayout from '@/components/layout/page-layout';
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
 import { 
     CalendarDays, Edit3, User, Settings, ShieldCheck, 
-    ChevronRight, LogOut, Bell, Palette, Languages, BookOpenCheck 
+    ChevronRight, LogOut, Bell, Palette, Languages, BookOpenCheck, Share2 
 } from 'lucide-react';
 
 const ProfilePage = () => {
@@ -36,7 +36,7 @@ const ProfilePage = () => {
   return (
     <PageLayout>
         <header className="w-full mb-12">
-            <h2 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-[#C183FA] to-[#EB499B]">User Profile</h2>
+            <h2 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">User Profile</h2>
             <p className="text-xl text-muted-foreground">
                 Manage your account information and preferences.
             </p>
@@ -68,10 +68,14 @@ const ProfilePage = () => {
                         <button className="w-full flex items-center text-left p-3 rounded-lg hover:bg-card transition-colors">
                             <ShieldCheck className="w-5 h-5 mr-4 text-primary" />
                             <span>Security & Password</span>
-            </button>
-                        <button className="w-full flex items-center text-left p-3 rounded-lg hover:bg-card transition-colors">
-                            <LogOut className="w-5 h-5 mr-4 text-red-500" />
-                            <span className="text-red-500">Log Out</span>
+                        </button>
+                        <Link href="/data-sharing" className="w-full flex items-center text-left p-3 rounded-lg hover:bg-card transition-colors">
+                            <Share2 className="w-5 h-5 mr-4 text-primary" />
+                            <span>Share Your Data</span>
+                        </Link>
+                        <button className="w-full flex items-center text-left p-3 rounded-lg hover:bg-destructive/10 transition-colors">
+                            <LogOut className="w-5 h-5 mr-4 text-destructive" />
+                            <span className="text-destructive">Log Out</span>
             </button>
           </div>
         </section>
@@ -147,7 +151,7 @@ const ProfilePage = () => {
                                     <p className='text-sm text-muted-foreground'>{user.preferences.receiveNotifications ? 'Enabled' : 'Disabled'}</p>
               </div>
             </div>
-                            <button className="px-4 py-1.5 text-sm border rounded-md transition-colors disabled:opacity-50">
+                            <button className="px-4 py-1.5 text-sm rounded-md transition-colors bg-primary/10 hover:bg-primary/20 text-primary-foreground">
                                 Toggle
                             </button>
               </div>
@@ -159,7 +163,7 @@ const ProfilePage = () => {
                                     <p className='text-sm text-muted-foreground'>Current: {user.preferences.language}</p>
               </div>
             </div>
-                            <button className="px-4 py-1.5 text-sm border rounded-md transition-colors disabled:opacity-50" disabled>
+                            <button className="px-4 py-1.5 text-sm rounded-md transition-colors bg-primary/10 hover:bg-primary/20 text-primary-foreground" disabled>
                                 Change
                             </button>
               </div>

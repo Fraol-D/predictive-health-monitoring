@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
 import 'package:predictive_health_monitoring/services/gemini_service.dart';
-// No need to import AppTheme here if not used directly.
+import 'package:predictive_health_monitoring/theme/app_theme.dart';
 
 class Message {
   final String id;
@@ -21,31 +21,13 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-  final List<Message> _messages = [];
+  final List<Message> _messages = [
+    Message(id: '1', text: "Hello! I'm your AI Health Assistant. How can I help you today?", isUser: false),
+  ];
   bool _isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    // Start with a default greeting from the AI
-    _messages.add(Message(id: '0', text: "Hello! I'm your AI Health Assistant. How can I help you today?", isUser: false));
-  }
-
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
-
   Future<void> _sendMessage() async {
-    if (_controller.text.isEmpty || _isLoading) return;
+    if (_controller.text.isEmpty) return;
     final geminiService = Provider.of<GeminiService>(context, listen: false);
     final userMessage = _controller.text;
 
@@ -54,7 +36,6 @@ class _ChatScreenState extends State<ChatScreen> {
       _isLoading = true;
       _controller.clear();
     });
-    _scrollToBottom();
 
     try {
       final response = await geminiService.generateContent(userMessage);
@@ -63,13 +44,12 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     } catch (e) {
       setState(() {
-        _messages.add(Message(id: DateTime.now().toString(), text: 'Sorry, I had trouble connecting. Please try again.', isUser: false));
+        _messages.add(Message(id: DateTime.now().toString(), text: 'Error: ${e.toString()}', isUser: false));
       });
     } finally {
       setState(() {
         _isLoading = false;
       });
-      _scrollToBottom();
     }
   }
 
@@ -80,115 +60,76 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isConversationStarted = _messages.length > 1;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('AI Health Assistant'),
-        centerTitle: true,
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: isConversationStarted
-                  ? ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.all(16.0),
-                      itemCount: _messages.length,
-                      itemBuilder: (context, index) {
-                        final message = _messages[index];
-                        return _buildMessage(message, theme);
-                      },
-                    )
-                  : _buildConversationStarters(),
-            ),
-            if (_isLoading)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                child: Row(
-                  children: [
-                    Icon(Icons.smart_toy_outlined, color: theme.colorScheme.primary),
-                    const SizedBox(width: 8),
-                    Text("AI is thinking...", style: theme.textTheme.bodySmall),
-                  ],
-                ),
-              ),
-            _buildChatInput(theme),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMessage(Message message, ThemeData theme) {
-    final isUser = message.isUser;
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-        margin: const EdgeInsets.symmetric(vertical: 5.0),
-        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
-        decoration: BoxDecoration(
-          color: isUser ? theme.colorScheme.primary : theme.colorScheme.surfaceContainer,
-          borderRadius: isUser
-              ? const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  bottomLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                  bottomRight: Radius.circular(4),
-                )
-              : const BorderRadius.only(
-                  topLeft: Radius.circular(4),
-                  bottomLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                  bottomRight: Radius.circular(16),
-                ),
-        ),
-        child: MarkdownBody(
-          data: message.text,
-          styleSheet: MarkdownStyleSheet(
-            p: TextStyle(
-              color: isUser ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChatInput(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
+      body: Column(
         children: [
           Expanded(
-            child: TextField(
-              controller: _controller,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                hintText: 'Ask the AI Health Assistant...',
-                filled: true,
-                fillColor: theme.colorScheme.surfaceContainer,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24.0),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              ),
-              onSubmitted: (_) => _sendMessage(),
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16.0),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final message = _messages[index];
+                return _buildMessage(message);
+              },
             ),
           ),
-          const SizedBox(width: 8.0),
-          IconButton(
-            icon: const Icon(Icons.send),
-            onPressed: _sendMessage,
-            style: IconButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              padding: const EdgeInsets.all(14),
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: CircularProgressIndicator(),
             ),
+          _buildChatInput(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessage(Message message) {
+    return Align(
+      alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4.0),
+        padding: const EdgeInsets.all(12.0),
+        decoration: BoxDecoration(
+          color: message.isUser ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        child: MarkdownBody(data: message.text),
+      ),
+    );
+  }
+
+  Widget _buildChatInput() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          if (_messages.length <= 1) _buildConversationStarters(),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  decoration: const InputDecoration(
+                    hintText: 'Ask anything...',
+                  ),
+                  onSubmitted: (_) => _sendMessage(),
+                ),
+              ),
+              const SizedBox(width: 8.0),
+              IconButton(
+                icon: const Icon(Icons.send),
+                onPressed: _sendMessage,
+                style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -196,59 +137,43 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildConversationStarters() {
-    final starters = [
-      {"text": "Prepare me a meal plan", "icon": Icons.restaurant_menu},
-      {"text": "Give me a weekly exercise guide", "icon": Icons.fitness_center},
-      {"text": "Analyze my last assessment", "icon": Icons.analytics_outlined},
-      {"text": "Show my health trends", "icon": Icons.show_chart},
-    ];
+    final suggestionButton = (String text, IconData icon) {
+      return Expanded(
+        child: OutlinedButton.icon(
+          icon: Icon(icon, size: 20),
+          label: Text(text),
+          onPressed: () => _onSuggestionTapped(text),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            textStyle: const TextStyle(fontSize: 12),
+            side: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+      );
+    };
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Try these", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            const Icon(Icons.auto_awesome_outlined, size: 48, color: Colors.amber),
-            const SizedBox(height: 16),
-            const Text("How can I help you today?", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 24),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 2.5,
-              ),
-              itemCount: starters.length,
-              itemBuilder: (context, index) {
-                final starter = starters[index];
-                return OutlinedButton.icon(
-                  icon: Icon(starter["icon"] as IconData, size: 20),
-                  label: Text(starter["text"] as String),
-                  onPressed: () => _onSuggestionTapped(starter["text"] as String),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.all(12),
-                    alignment: Alignment.centerLeft,
-                    textStyle: const TextStyle(fontSize: 13),
-                    side: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                );
-              },
-            ),
+            suggestionButton("Latest news", Icons.article_outlined),
+            const SizedBox(width: 12),
+            suggestionButton("Create images", Icons.image_outlined),
+            const SizedBox(width: 12),
+            suggestionButton("Cartoon style", Icons.brush_outlined),
           ],
         ),
-      ),
+        // Old buttons commented out
+        // ElevatedButton(onPressed: () => _controller.text = 'Get my health risk', child: const Text('Get my health risk')),
+        // ElevatedButton(onPressed: () => _controller.text = 'Show my last assessment', child: const Text('Show my last assessment')),
+        // ElevatedButton(onPressed: () => _controller.text = 'Give health tips', child: const Text('Give health tips')),
+        // ElevatedButton(onPressed: () => _controller.text = 'Explain my results', child: const Text('Explain my results')),
+      ],
     );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _scrollController.dispose();
-    super.dispose();
   }
 } 

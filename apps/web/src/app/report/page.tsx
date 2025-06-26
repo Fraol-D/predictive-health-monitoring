@@ -37,7 +37,7 @@ const getRiskStyling = (level: string) => {
   switch (level) {
     case 'High':
     case 'Very High':
-      return 'text-red-400 border-red-400/50';
+      return 'text-destructive border-destructive/50';
     case 'Medium':
       return 'text-yellow-400 border-yellow-400/50';
     case 'Low':
@@ -50,7 +50,7 @@ export default function ReportHistoryPage() {
   return (
     <PageLayout>
       <header className="w-full mb-12">
-        <h2 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-[#C183FA] to-[#EB499B]">Assessment History</h2>
+        <h2 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">Assessment History</h2>
         <p className="text-xl text-muted-foreground">
           Review your past health assessments and track your progress.
         </p>

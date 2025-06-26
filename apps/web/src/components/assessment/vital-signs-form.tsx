@@ -25,6 +25,7 @@ export const VitalSignsForm: React.FC<VitalSignsFormProps> = ({ data, onChange, 
   };
 
   return (
+    <div className="h-[60vh] max-h-[700px] overflow-y-auto pr-4 sidebar-scroll-container">
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -129,6 +130,7 @@ export const VitalSignsForm: React.FC<VitalSignsFormProps> = ({ data, onChange, 
         >
           Complete Assessment
         </button>
+        </div>
       </div>
     </div>
   );

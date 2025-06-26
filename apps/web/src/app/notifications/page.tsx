@@ -51,9 +51,9 @@ const mockNotifications: Notification[] = [
 
 
 const notificationStyles = {
-  alert: { icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-900/20' },
+  alert: { icon: AlertTriangle, color: 'text-destructive', bg: 'bg-destructive/20' },
   update: { icon: CheckCircle, color: 'text-green-400', bg: 'bg-green-900/20' },
-  recommendation: { icon: Bell, color: 'text-sky-400', bg: 'bg-sky-900/20' },
+  recommendation: { icon: Bell, color: 'text-primary', bg: 'bg-primary/20' },
 };
 
 const NotificationItem = ({ notif }: { notif: Notification }) => {
@@ -79,7 +79,7 @@ export default function NotificationsPage() {
   return (
     <PageLayout>
       <header className="w-full mb-12">
-        <h2 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-[#C183FA] via-[#A259F7] via-[#D16BA5] to-[#EB499B]">Notifications</h2>
+        <h2 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">Notifications</h2>
         <p className="text-xl text-muted-foreground">
           Stay updated with important alerts and health news.
         </p>

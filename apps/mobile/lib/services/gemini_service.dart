@@ -2,21 +2,22 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GeminiService {
-  // The API key is no longer directly used in the mobile app.
-  // The backend will handle Gemini API authentication.
-  // final String _apiKey; 
-  
-  // URL for the local backend. For Android emulator, 10.0.2.2 points to localhost.
-  static const String _baseUrl = 'http://10.0.2.2:3001/api';
+  final String _apiKey;
+  static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'; // Example: Using gemini-pro
 
-  // The constructor no longer needs the API key.
-  GeminiService();
+  GeminiService({required String apiKey}) : _apiKey = apiKey;
 
   Future<String> generateContent(String prompt) async {
-    final url = Uri.parse('$_baseUrl/chat');
+    final url = Uri.parse('$_baseUrl?key=$_apiKey');
     
     final requestBody = {
-      "message": prompt
+      "contents": [
+        {
+          "parts": [
+            {"text": prompt}
+          ]
+        }
+      ]
     };
 
     try {
@@ -28,26 +29,30 @@ class GeminiService {
 
       if (response.statusCode == 200) {
         final decodedResponse = jsonDecode(response.body);
-        if (decodedResponse.containsKey('reply')) {
-          return decodedResponse['reply'] as String;
+        // Extract the text from the response based on Gemini API structure
+        if (decodedResponse.containsKey('candidates') &&
+            (decodedResponse['candidates'] as List).isNotEmpty &&
+            decodedResponse['candidates'][0].containsKey('content') &&
+            decodedResponse['candidates'][0]['content'].containsKey('parts') &&
+            (decodedResponse['candidates'][0]['content']['parts'] as List).isNotEmpty &&
+            decodedResponse['candidates'][0]['content']['parts'][0].containsKey('text')) {
+          return decodedResponse['candidates'][0]['content']['parts'][0]['text'] as String;
         } else {
-          throw Exception('Backend response did not contain a "reply" field.');
+          throw Exception('Failed to extract content from Gemini response.');
         }
       } else {
-        print('Backend API Error: ${response.statusCode}');
+        // Consider more robust error handling: logging, custom exceptions
+        print('Gemini API Error: ${response.statusCode}');
         print('Response body: ${response.body}');
-        throw Exception('Failed to get response from backend: ${response.statusCode}');
+        throw Exception('Failed to get response from Gemini API: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error communicating with backend: $e');
-      throw Exception('Failed to communicate with backend: $e');
+      print('Error calling Gemini API: $e');
+      throw Exception('Failed to communicate with Gemini API: $e');
     }
   }
 
-  // This method communicates directly with Google's API and should be refactored
-  // to use the backend server instead for security and consistency.
-  // Commenting it out for now as the immediate task is to fix the main chat feature.
-  /*
+  // Example of a more specific method for risk assessment
   Future<Map<String, dynamic>> getHealthRiskAssessment(Map<String, dynamic> userData) async {
     // Construct a detailed prompt based on userData
     // This needs to be carefully designed to get the desired output format (e.g., JSON with risk scores)
@@ -106,5 +111,4 @@ class GeminiService {
       throw Exception('Failed to communicate with Gemini API for health assessment: $e');
     }
   }
-  */
 } 

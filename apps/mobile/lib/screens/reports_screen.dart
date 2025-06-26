@@ -1,99 +1,80 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:predictive_health_monitoring/screens/report_details_screen.dart';
+import 'package:predictive_health_monitoring/theme/app_theme.dart';
 
 class ReportsScreen extends StatelessWidget {
   const ReportsScreen({super.key});
-
-  // Mock data for a list of past assessments
-  final List<Map<String, dynamic>> _assessments = const [
-    {
-      'id': 'assessment_101',
-      'date': '2023-10-28T10:00:00Z',
-      'riskLevel': 'Medium',
-      'riskScore': 68,
-    },
-    {
-      'id': 'assessment_102',
-      'date': '2023-09-15T14:30:00Z',
-      'riskLevel': 'Low',
-      'riskScore': 35,
-    },
-    {
-      'id': 'assessment_103',
-      'date': '2023-08-01T09:00:00Z',
-      'riskLevel': 'High',
-      'riskScore': 82,
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Assessment History'),
-        centerTitle: true,
+        title: const Text('Health Reports'),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-        itemCount: _assessments.length,
-        itemBuilder: (context, index) {
-          final assessment = _assessments[index];
-          final date = DateTime.parse(assessment['date']);
-          final formattedDate = DateFormat.yMMMMd().add_jm().format(date);
-          final riskColor = _getRiskColor(assessment['riskLevel']);
-
-          return Card(
-            elevation: 3,
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16.0),
-              leading: CircleAvatar(
-                backgroundColor: riskColor.withOpacity(0.15),
-                child: Text(
-                  '${assessment['riskScore']}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: riskColor,
-                  ),
-                ),
-              ),
-              title: Text(
-                'Risk Level: ${assessment['riskLevel']}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text('Completed on:\n$formattedDate'),
-              trailing: const Icon(Icons.chevron_right),
-              isThreeLine: true,
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => ReportDetailsScreen(
-                      assessmentId: assessment['id'],
-                    ),
-                  ),
-                );
-              },
-            ),
-          );
-        },
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildRiskScoreCard(context),
+            const SizedBox(height: 24),
+            _buildHealthTrendsCard(context),
+          ],
+        ),
       ),
     );
   }
 
-  Color _getRiskColor(String riskLevel) {
-    switch (riskLevel) {
-      case 'High':
-        return Colors.red.shade600;
-      case 'Medium':
-        return Colors.orange.shade600;
-      case 'Low':
-        return Colors.green.shade600;
-      default:
-        return Colors.grey;
-    }
+  Widget _buildRiskScoreCard(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Text('Overall Risk Score', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 200,
+              child: PieChart(
+                PieChartData(
+                  sections: [
+                    PieChartSectionData(value: 40, color: Colors.red, title: '40%', radius: 50),
+                    PieChartSectionData(value: 30, color: Colors.amber, title: '30%', radius: 50),
+                    PieChartSectionData(value: 30, color: Colors.green, title: '30%', radius: 50),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHealthTrendsCard(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Text('Health Trends', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 200,
+              child: BarChart(
+                BarChartData(
+                  barGroups: [
+                    BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 8, color: AppTheme.lightPrimary)]),
+                    BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 10, color: AppTheme.lightPrimary)]),
+                    BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 14, color: AppTheme.lightPrimary)]),
+                    BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 15, color: AppTheme.lightPrimary)]),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 } 

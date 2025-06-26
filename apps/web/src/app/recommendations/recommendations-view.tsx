@@ -25,13 +25,13 @@ const mockRecommendations: Recommendation[] = [
 
 const categoryStyles: Record<string, { icon: LucideIcon; color: string; }> = {
   Diet: { icon: Apple, color: 'text-green-400' },
-  Exercise: { icon: Dumbbell, color: 'text-sky-400' },
-  'Mental Health': { icon: Brain, color: 'text-purple-400' },
-  General: { icon: Heart, color: 'text-pink-400' },
+  Exercise: { icon: Dumbbell, color: 'text-primary' },
+  'Mental Health': { icon: Brain, color: 'text-primary' },
+  General: { icon: Heart, color: 'text-accent' },
 };
 
 const priorityStyles: Record<string, string> = {
-  High: 'border-red-400/50',
+  High: 'border-destructive',
   Medium: 'border-yellow-400/50',
   Low: 'border-green-400/50',
 };
@@ -56,7 +56,7 @@ const RecommendationCard = ({ rec }: { rec: Recommendation }) => {
                 <p className="text-muted-foreground leading-relaxed">{rec.advice}</p>
       </div>
             <div className="bg-card/50 px-6 py-3 border-t border-border/20 text-right">
-                 <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${priorityStyle.replace('border-', 'bg-').replace('/50', '/20')} ${priorityStyle.replace('border', 'text')}`}>
+                 <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${rec.priority === 'High' ? 'bg-destructive/20 text-destructive' : rec.priority === 'Medium' ? 'bg-yellow-400/20 text-yellow-500' : 'bg-green-400/20 text-green-500'}`}>
                             {rec.priority} Priority
                           </span>
                   </div>
@@ -68,7 +68,7 @@ const RecommendationsView = () => {
   return (
     <PageLayout>
         <header className="w-full mb-12">
-          <h2 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-[#C183FA] to-[#EB499B]">Health Recommendations</h2>
+          <h2 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">Health Recommendations</h2>
           <p className="text-xl text-muted-foreground">
             Personalized advice to help you lead a healthier life.
           </p>

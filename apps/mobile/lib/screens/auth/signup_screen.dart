@@ -33,10 +33,10 @@ class _SignupScreenState extends State<SignupScreen> {
     if (_passwordController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _nameController.text.isEmpty) {
-        setState(() {
-            _errorMessage = "Please fill all fields.";
-        });
-        return;
+      setState(() {
+        _errorMessage = "Please fill all fields.";
+      });
+      return;
     }
 
     final authService = Provider.of<AuthService>(context, listen: false);
@@ -55,13 +55,13 @@ class _SignupScreenState extends State<SignupScreen> {
       // We are not using the credential directly, but you could if needed
       // For example, to link accounts or save user data to Firestore
       // For now, AuthGate will handle navigation after state change.
-      
+
       setState(() {
         // This is a placeholder for email verification UI.
         // In a real app, you might navigate to a dedicated "please verify" screen
         // or handle it within the AuthGate.
-          _uiState = 'verifyEmail';
-          _isLoading = false;
+        _uiState = 'verifyEmail';
+        _isLoading = false;
       });
     } catch (e) {
       setState(() {
@@ -195,7 +195,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 style: Theme.of(context).textTheme.bodyMedium),
             TextButton(
               onPressed: () {
-                 Navigator.of(context).pop();
+                Navigator.of(context).pop();
               },
               child: Text('Log In',
                   style: TextStyle(
@@ -208,38 +208,38 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-    Widget _buildVerifyEmailUI() {
+  Widget _buildVerifyEmailUI() {
     return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
         Icon(Icons.email_outlined,
             size: 80, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 24),
-            Text(
-                'Verify Your Email',
-                textAlign: TextAlign.center,
+        const SizedBox(height: 24),
+        Text(
+          'Verify Your Email',
+          textAlign: TextAlign.center,
           style: Theme.of(context)
               .textTheme
               .headlineMedium
               ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Text(
-                'A verification link has been sent to your email address. Please check your inbox and click the link to continue.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge,
-            ),
-             const SizedBox(height: 32),
-            GradientButton(
-                text: 'Back to Login',
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'A verification link has been sent to your email address. Please check your inbox and click the link to continue.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+        const SizedBox(height: 32),
+        GradientButton(
+          text: 'Back to Login',
           gradient: AppTheme.secondaryGradient,
           icon: Icons.arrow_back,
-                onPressed: () {
-                    Navigator.of(context).pop();
-                },
-            ),
-        ],
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ],
     );
   }
 
