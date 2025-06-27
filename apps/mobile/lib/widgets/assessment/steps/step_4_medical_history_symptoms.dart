@@ -55,6 +55,9 @@ class _Step4MedicalHistoryState extends AssessmentStepState<Step4MedicalHistory>
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -72,19 +75,22 @@ class _Step4MedicalHistoryState extends AssessmentStepState<Step4MedicalHistory>
           ),
           const SizedBox(height: 24),
           Text("Family History", style: Theme.of(context).textTheme.titleMedium),
-          ..._familyHistory.keys.map((String key) {
-            return CheckboxListTile(
-              title: Text(key),
-              value: _familyHistory[key],
-              onChanged: (bool? value) {
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 4.0,
+                children: _familyHistory.keys.map((String key) {
+                  return ChoiceChip(
+                    label: Text(key),
+                    selected: _familyHistory[key]!,
+                    onSelected: (bool selected) {
                 setState(() {
-                  _familyHistory[key] = value!;
+                        _familyHistory[key] = selected;
                 });
               },
-              controlAffinity: ListTileControlAffinity.leading,
-              contentPadding: EdgeInsets.zero,
             );
           }).toList(),
+              ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _conditionsController,
@@ -137,6 +143,8 @@ class _Step4MedicalHistoryState extends AssessmentStepState<Step4MedicalHistory>
             },
           ),
         ],
+          ),
+        ),
       ),
     );
   }

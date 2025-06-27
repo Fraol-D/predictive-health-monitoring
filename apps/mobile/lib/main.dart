@@ -26,7 +26,7 @@ Future<void> main() async {
   );
 
   // Create and initialize the provider
-  final themeProvider = ThemeProvider();
+  //final themeProvider = ThemeProvider();
   // The constructor now handles loading, but let's ensure it's ready if needed,
   // although constructor cannot be async. The loading is "fire and forget".
   // The UI will update once `_loadThemeMode` completes.

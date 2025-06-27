@@ -48,6 +48,10 @@ dependencies:
   google_sign_in:
   flutter_markdown:
   fl_chart:
+  google_fonts: ^6.2.1
+  uuid: ^4.5.1
+  flutter_speed_dial: ^7.0.0
+  badges: ^3.1.2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

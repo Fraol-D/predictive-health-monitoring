@@ -1,50 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Common Font Family
   // Using a system-safe font stack is often better than a single named font unless bundled.
   static const String fontSans = 'Inter'; // Assuming 'Inter' is bundled with the app
 
-  // --- DARK THEME COLORS (from web globals.css) ---
-  static const Color darkBackground = Color.fromRGBO(26, 32, 44, 1);       // Rich Dark Blue
-  static const Color darkCard = Color.fromRGBO(45, 55, 72, 1);           // Darker Gray-Blue
-  static const Color darkForeground = Color.fromRGBO(226, 232, 240, 1); // Light Gray/Off-White
-  static const Color darkMutedForeground = Color.fromRGBO(156, 163, 175, 1); // gray-400
-  static const Color darkBorder = Color.fromRGBO(75, 85, 99, 1);           // gray-600
-  static const Color darkPrimary = Color.fromRGBO(0, 188, 212, 1);         // Bright Cyan
-  static const Color darkAccent = Color.fromRGBO(167, 139, 250, 1);      // Soft Purple
+  // --- OFFICIAL COLOR PALETTE (from web globals.css) ---
+  
+  // Light Theme Colors
+  static const Color lightBackground = Color.fromRGBO(248, 250, 252, 1);
+  static const Color lightForeground = Color.fromRGBO(15, 23, 42, 1);
+  static const Color lightCard = Color.fromRGBO(255, 255, 255, 1);
+  static const Color lightPrimary = Color.fromRGBO(168, 85, 247, 1);
+  static const Color lightAccent = Color.fromRGBO(236, 72, 153, 1);
+  static const Color lightMutedForeground = Color.fromRGBO(100, 116, 139, 1);
+  static const Color lightBorder = Color.fromRGBO(226, 232, 240, 1);
 
-  // --- LIGHT THEME COLORS (from web globals.css) ---
-  static const Color lightBackground = Color.fromRGBO(249, 250, 251, 1); // Very Light Gray
-  static const Color lightCard = Color.fromRGBO(255, 255, 255, 1);       // Pure White
-  static const Color lightForeground = Color.fromRGBO(51, 51, 51, 1);      // Dark Charcoal
-  static const Color lightMutedForeground = Color.fromRGBO(107, 114, 128, 1); // gray-500
-  static const Color lightBorder = Color.fromRGBO(229, 231, 235, 1);     // gray-200
-  static const Color lightPrimary = Color.fromRGBO(0, 167, 157, 1);       // Vibrant Teal
-  static const Color lightAccent = Color.fromRGBO(255, 140, 66, 1);      // Warm Orange
-
-  // --- GRADIENTS (from web globals.css .btn-gradient-*) ---
-  // Note: Tailwind colors (e.g., purple-500) need to be mapped to hex.
-  // These are standard Tailwind CSS color values.
-  static const Color gradientPurple500 = Color(0xFF8B5CF6);
-  static const Color gradientPink500 = Color(0xFFEC4899);
-  static const Color gradientGreen500 = Color(0xFF22C55E);
-  static const Color gradientBlue600 = Color(0xFF2563EB);
-
-  static const LinearGradient primaryGradient = LinearGradient(
-    colors: [gradientGreen500, gradientBlue600],
+  // Dark Theme Colors
+  static const Color darkBackground = Color.fromRGBO(15, 23, 42, 1);
+  static const Color darkForeground = Color.fromRGBO(226, 232, 240, 1);
+  static const Color darkCard = Color.fromRGBO(30, 41, 59, 1);
+  static const Color darkPrimary = Color.fromRGBO(192, 132, 252, 1);
+  static const Color darkAccent = Color.fromRGBO(249, 115, 222, 1);
+  static const Color darkMutedForeground = Color.fromRGBO(148, 163, 184, 1);
+  static const Color darkBorder = Color.fromRGBO(51, 65, 85, 1);
+  
+  // --- GRADIENTS ---
+  
+  // Purple-to-Pink for Headers and Important Titles
+  static const LinearGradient titleHeaderGradient = LinearGradient(
+    colors: [lightPrimary, lightAccent],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
 
-  static const LinearGradient secondaryGradient = LinearGradient(
-    colors: [gradientPurple500, gradientPink500],
+  // Green-to-Blue for main call-to-action buttons
+  static const Color actionGreen = Color(0xFF10B981); // Emerald 500
+  static const Color actionBlue = Color(0xFF3B82F6);  // Blue 500
+  static const LinearGradient actionButtonGradient = LinearGradient(
+    colors: [actionGreen, actionBlue],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
+  
+  // High-contrast colors for charts to ensure readability
+  static final List<Color> chartColors = [
+    const Color(0xFF3B82F6), // Blue 500
+    const Color(0xFF10B981), // Emerald 500
+    const Color(0xFFF97316), // Orange 500
+    const Color(0xFF8B5CF6), // Violet 500
+    const Color(0xFFEC4899), // Pink 500
+    const Color(0xFFFACC15), // Yellow 400
+  ];
 
-  // Consistent Border Radius (from web globals.css --radius)
-  static final BorderRadius _borderRadius = BorderRadius.circular(8.0); // 0.5rem is often 8px
+  // Consistent Border Radius (from web --radius: 0.5rem)
+  static final BorderRadius _borderRadius = BorderRadius.circular(12.0);
 
   // Base theme builder
   static ThemeData _buildTheme({
@@ -57,12 +68,15 @@ class AppTheme {
     required Color primaryColor,
     required Color accentColor,
     required Color onPrimaryColor,
+    required Color onAccentColor,
   }) {
+    final textTheme = _buildTextTheme(
+        baseFontColor: foregroundColor, mutedFontColor: mutedColor);
+
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
       scaffoldBackgroundColor: backgroundColor,
-      fontFamily: fontSans,
       colorScheme: brightness == Brightness.dark
           ? ColorScheme.dark(
               primary: primaryColor,
@@ -70,11 +84,11 @@ class AppTheme {
               surface: cardColor,
               background: backgroundColor,
               onPrimary: onPrimaryColor,
-              onSecondary: darkBackground,
+              onSecondary: onAccentColor,
               onSurface: foregroundColor,
               onBackground: foregroundColor,
-              error: Colors.redAccent,
-              onError: Colors.white,
+              error: const Color(0xFFF87171), // Red 400
+              onError: darkBackground,
               outline: borderColor,
             )
           : ColorScheme.light(
@@ -83,11 +97,11 @@ class AppTheme {
               surface: cardColor,
               background: backgroundColor,
               onPrimary: onPrimaryColor,
-              onSecondary: Colors.white,
+              onSecondary: onAccentColor,
               onSurface: foregroundColor,
               onBackground: foregroundColor,
-              error: Colors.red.shade700,
-              onError: Colors.white,
+              error: const Color(0xFFDC2626), // Red 600
+              onError: lightCard,
               outline: borderColor,
             ),
       cardTheme: CardThemeData(
@@ -96,51 +110,54 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: _borderRadius,
-          side: BorderSide(color: borderColor, width: 1.5),
+          side: BorderSide(color: borderColor, width: 1),
         ),
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: backgroundColor,
-        foregroundColor: foregroundColor,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: TextStyle(
-          fontFamily: fontSans,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: foregroundColor,
-        ),
+        titleTextStyle: textTheme.headlineMedium,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: cardColor,
-        hintStyle: TextStyle(color: mutedColor),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        hintStyle: textTheme.bodyMedium?.copyWith(color: mutedColor),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: _borderRadius,
-          borderSide: BorderSide(color: borderColor),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: _borderRadius,
-          borderSide: BorderSide(color: borderColor),
+          borderSide: BorderSide(color: borderColor, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: _borderRadius,
           borderSide: BorderSide(color: primaryColor, width: 2),
         ),
       ),
-      textTheme: _buildTextTheme(baseFontColor: foregroundColor, mutedFontColor: mutedColor),
+      textTheme: textTheme,
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          // This will be overridden by custom gradient buttons, but provides a fallback
           backgroundColor: primaryColor,
           foregroundColor: onPrimaryColor,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: _borderRadius),
-          textStyle: const TextStyle(fontFamily: fontSans, fontWeight: FontWeight.bold, fontSize: 16),
+          textStyle: textTheme.labelLarge,
         ),
+      ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: cardColor,
+        selectedItemColor: primaryColor,
+        unselectedItemColor: mutedColor,
+        elevation: 8,
+        type: BottomNavigationBarType.fixed,
+        selectedLabelStyle: textTheme.labelSmall,
+        unselectedLabelStyle: textTheme.labelSmall,
       ),
     );
   }
@@ -157,6 +174,7 @@ class AppTheme {
       primaryColor: lightPrimary,
       accentColor: lightAccent,
       onPrimaryColor: Colors.white,
+      onAccentColor: Colors.white,
     );
   }
 
@@ -171,23 +189,32 @@ class AppTheme {
       primaryColor: darkPrimary,
       accentColor: darkAccent,
       onPrimaryColor: darkBackground,
+      onAccentColor: darkBackground,
     );
   }
 
-  static TextTheme _buildTextTheme({required Color baseFontColor, required Color mutedFontColor}) {
+  static TextTheme _buildTextTheme(
+      {required Color baseFontColor, required Color mutedFontColor}) {
     return TextTheme(
-      // For large headlines
-      displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: baseFontColor),
-      // For screen titles
-      headlineLarge: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: baseFontColor),
-      // For card titles
-      titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: baseFontColor),
-      titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: baseFontColor),
-      // For body text
-      bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.normal, color: baseFontColor, height: 1.5),
-      bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.normal, color: mutedFontColor, height: 1.4),
-      // For button labels
-      labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: baseFontColor),
+      displayLarge: GoogleFonts.inter(fontSize: 57, fontWeight: FontWeight.w800, color: baseFontColor, letterSpacing: -0.25),
+      displayMedium: GoogleFonts.inter(fontSize: 45, fontWeight: FontWeight.w700, color: baseFontColor),
+      displaySmall: GoogleFonts.inter(fontSize: 36, fontWeight: FontWeight.w600, color: baseFontColor),
+
+      headlineLarge: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w700, color: baseFontColor),
+      headlineMedium: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w600, color: baseFontColor),
+      headlineSmall: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w500, color: baseFontColor),
+      
+      titleLarge: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w500, color: baseFontColor),
+      titleMedium: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: baseFontColor, letterSpacing: 0.15),
+      titleSmall: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: baseFontColor, letterSpacing: 0.1),
+
+      bodyLarge: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.normal, color: baseFontColor, height: 1.5),
+      bodyMedium: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.normal, color: mutedFontColor, height: 1.4),
+      bodySmall: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.normal, color: mutedFontColor),
+
+      labelLarge: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: baseFontColor, letterSpacing: 0.5),
+      labelMedium: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: baseFontColor),
+      labelSmall: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w500, color: mutedFontColor),
     );
   }
 }

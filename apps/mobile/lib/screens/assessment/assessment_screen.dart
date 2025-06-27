@@ -97,13 +97,21 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Health Assessment'),
+        title: Text(
+          'Assessment',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20),
+        ),
         leading: _currentStep > 0
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
                 onPressed: _onStepCancel,
               )
             : null,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: AppTheme.titleHeaderGradient,
+          ),
+        ),
       ),
       body: Column(
         children: [
@@ -118,9 +126,9 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
               children: stepPages,
             ),
           ),
+          _buildNavigation(),
         ],
       ),
-       bottomNavigationBar: _buildNavigation(),
     );
   }
 
@@ -141,10 +149,18 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
           
           Expanded(
             child: GradientButton(
-              onPressed: _onStepContinue,
+              onPressed: () {
+                if (isLastStep) {
+                  _submitAssessment();
+                } else {
+                  _pageController.nextPage(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.ease,
+                  );
+                }
+              },
               text: isLastStep ? 'SUBMIT' : 'NEXT',
-              gradient: isLastStep ? AppTheme.primaryGradient : AppTheme.secondaryGradient,
-              icon: isLastStep ? Icons.check_circle_outline : Icons.arrow_forward,
+              gradient: isLastStep ? AppTheme.actionButtonGradient : AppTheme.titleHeaderGradient,
             ),
           ),
         ],

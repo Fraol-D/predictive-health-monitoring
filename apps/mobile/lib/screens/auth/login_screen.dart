@@ -183,8 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
               GradientButton(
                 text: 'Log In with Email',
                 onPressed: _isLoading ? () {} : () => _loginWithEmail(context),
-                gradient: AppTheme.secondaryGradient,
-                icon: Icons.email,
+                gradient: AppTheme.titleHeaderGradient,
               ),
               const SizedBox(height: 24.0),
               const Row(

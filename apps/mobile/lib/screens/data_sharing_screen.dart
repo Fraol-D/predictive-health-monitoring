@@ -70,10 +70,11 @@ class _DataSharingScreenState extends State<DataSharingScreen> {
             _buildConsentToggle(),
             const SizedBox(height: 32),
             GradientButton(
-              text: 'Share Data Securely',
-              onPressed: _shareData,
-              gradient: AppTheme.primaryGradient,
-              icon: Icons.shield_outlined,
+              text: 'Save Preferences',
+              onPressed: () {
+                // TODO: Implement save logic
+              },
+              gradient: AppTheme.actionButtonGradient,
             ),
           ],
         ),

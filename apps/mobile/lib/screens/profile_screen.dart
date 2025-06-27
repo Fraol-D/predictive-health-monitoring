@@ -1,18 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:predictive_health_monitoring/screens/data_sharing_screen.dart';
-import 'package:predictive_health_monitoring/widgets/common/gradient_button.dart';
+import 'package:predictive_health_monitoring/theme/app_theme.dart';
+import 'package:provider/provider.dart';
+import 'package:predictive_health_monitoring/services/auth_service.dart';
+import 'package:predictive_health_monitoring/screens/notifications_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(
+          'Profile',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: AppTheme.titleHeaderGradient,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(vertical: 24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -20,7 +32,7 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 32),
             _buildSection(
               context,
-              title: 'Assessment History',
+              title: 'Health Management',
               children: [
                 _buildListTile(
                   context,
@@ -39,7 +51,7 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 24),
             _buildSection(
               context,
-              title: 'Settings',
+              title: 'Account & Settings',
               children: [
                 _buildListTile(
                   context,
@@ -49,35 +61,41 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 _buildListTile(
                   context,
-                  icon: Icons.share_outlined,
-                  title: 'Share Your Data',
+                  icon: Icons.notifications_outlined,
+                  title: 'Notifications',
                   onTap: () {
-                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => const DataSharingScreen()));
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => const NotificationsScreen()));
                   },
                 ),
-                _buildSwitchTile(
+                _buildListTile(
                   context,
-                  icon: Icons.notifications_active_outlined,
-                  title: 'Anonymous Data Sharing',
-                  subtitle: 'Help improve our prediction models',
-                  value: true, // Mock value
-                  onChanged: (value) {},
+                  icon: Icons.share_outlined,
+                  title: 'Data Sharing & Consent',
+                  onTap: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => const DataSharingScreen()));
+                  },
+                ),
+                 _buildListTile(
+                  context,
+                  icon: Icons.logout,
+                  title: 'Sign Out',
+                  onTap: () async {
+                    await Provider.of<AuthService>(context, listen: false).signOut();
+                  },
                 ),
               ],
             ),
-            const SizedBox(height: 40),
-            GradientButton(
-              text: 'Sign Out',
-              onPressed: () {
-                // TODO: Implement sign out logic
-              },
-              gradient: LinearGradient(
-                colors: [
-                  Colors.grey.shade600,
-                  Colors.grey.shade800,
-                ],
-              ),
-            ),
+             const SizedBox(height: 24),
+             Padding(
+               padding: const EdgeInsets.symmetric(horizontal: 16.0),
+               child: Text(
+                 'Version 1.0.0',
+                 textAlign: TextAlign.center,
+                 style: theme.textTheme.bodySmall,
+               ),
+             )
           ],
         ),
       ),
@@ -85,65 +103,66 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildProfileHeader(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Column(
       children: [
-        const CircleAvatar(
+        CircleAvatar(
           radius: 50,
-          // backgroundImage: NetworkImage('URL_TO_USER_IMAGE'), // Placeholder
-          backgroundColor: Colors.grey,
-          child: Icon(Icons.person, size: 50, color: Colors.white),
+          backgroundColor: colorScheme.primaryContainer,
+          child: Text(
+            'JD', // Placeholder initials
+            style: textTheme.displaySmall?.copyWith(color: colorScheme.onPrimaryContainer),
+          ),
         ),
         const SizedBox(height: 16),
         Text(
           'John Doe', // Placeholder name
-          style: Theme.of(context).textTheme.headlineSmall,
+          style: textTheme.headlineSmall,
         ),
         Text(
           'john.doe@example.com', // Placeholder email
-          style: Theme.of(context).textTheme.bodyMedium,
+          style: textTheme.bodyMedium,
         ),
       ],
     );
   }
 
-  Widget _buildSection(BuildContext context, {required String title, required List<Widget> children}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title.toUpperCase(),
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-              ),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: children,
+  Widget _buildSection(BuildContext context,
+      {required String title, required List<Widget> children}) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.6),
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          Card(
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: children,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildListTile(BuildContext context, {required IconData icon, required String title, VoidCallback? onTap}) {
+  Widget _buildListTile(BuildContext context,
+      {required IconData icon, required String title, VoidCallback? onTap}) {
+    final theme = Theme.of(context);
     return ListTile(
-      leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
-      title: Text(title, style: Theme.of(context).textTheme.titleMedium),
+      leading: Icon(icon, color: theme.colorScheme.primary),
+      title: Text(title, style: theme.textTheme.titleMedium),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
-    );
-  }
-
-  Widget _buildSwitchTile(BuildContext context, {required IconData icon, required String title, required String subtitle, required bool value, required ValueChanged<bool> onChanged}) {
-    return SwitchListTile(
-      secondary: Icon(icon, color: Theme.of(context).colorScheme.primary),
-      title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-      subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-      value: value,
-      onChanged: onChanged,
-      activeColor: Theme.of(context).colorScheme.primary,
     );
   }
 } 

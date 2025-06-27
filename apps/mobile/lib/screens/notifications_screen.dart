@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -39,7 +40,15 @@ class NotificationsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(
+          'Notifications',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: AppTheme.titleHeaderGradient,
+          ),
+        ),
       ),
       body: ListView.separated(
         padding: const EdgeInsets.all(16.0),

@@ -5,8 +5,19 @@ import Link from 'next/link';
 import { Bot, User, Send, Loader2, Sparkles, ChevronLeft, Menu, Plus, MessageSquare, X, Trash2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Define types
 interface Message {
@@ -78,26 +89,6 @@ const ChatPage = () => {
     }
     textareaRef.current?.focus();
   }, []);
-
-  const handleDeleteChat = useCallback((chatId: string) => {
-    if (!chatId) return;
-    
-    if (window.confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
-      setChats(prev => {
-        const newChats = { ...prev };
-        delete newChats[chatId];
-        // Also update localStorage right away
-        localStorage.setItem('chatHistory', JSON.stringify(newChats));
-        return newChats;
-      });
-      
-      // If the deleted chat was the active one, reset to the new chat screen
-      if (activeChatId === chatId) {
-        setActiveChatId(null);
-        localStorage.removeItem('activeChatId');
-      }
-    }
-  }, [activeChatId]);
 
   useEffect(() => {
     const sortedChats = Object.values(chats).sort((a, b) => b.timestamp - a.timestamp);
@@ -261,15 +252,49 @@ const ChatPage = () => {
         {/* Header */}
         <header className="flex items-center justify-end h-16 px-4 gap-2">
           {activeChatId && (
-            <Button
-              variant="destructive"
-              size="icon"
-              onClick={() => handleDeleteChat(activeChatId)}
-              className="h-9 w-9 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
-              aria-label="Delete Chat"
-            >
-              <Trash2 className="w-5 h-5" />
-            </Button>
+             <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="h-9 w-9 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                  aria-label="Delete Chat"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure you want to delete this chat?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete this chat from your history.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                     onClick={() => {
+                        if (!activeChatId) return;
+                        
+                        setChats(prev => {
+                          const newChats = { ...prev };
+                          delete newChats[activeChatId];
+                          // Also update localStorage right away
+                          localStorage.setItem('chatHistory', JSON.stringify(newChats));
+                          return newChats;
+                        });
+                        
+                        // If the deleted chat was the active one, reset to the new chat screen
+                        setActiveChatId(null);
+                        localStorage.removeItem('activeChatId');
+                     }}
+                     className={buttonVariants({ variant: "destructive" })}
+                  >
+                    Delete Chat
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
           <Button
             size="icon"

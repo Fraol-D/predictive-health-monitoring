@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:badges/badges.dart' as badges;
+import 'package:predictive_health_monitoring/screens/notifications_screen.dart';
 import 'package:predictive_health_monitoring/theme/app_theme.dart';
 
 class RecommendationsScreen extends StatelessWidget {
@@ -11,38 +13,52 @@ class RecommendationsScreen extends StatelessWidget {
       {
         'title': 'Increase Daily Steps',
         'description': 'Aim for at least 10,000 steps per day to improve cardiovascular health and manage weight. Try taking the stairs or going for a walk during your lunch break.',
-        'priority': 'High',
-        'priorityColor': Colors.red.shade400,
+        'priority': 'High Risk',
       },
       {
         'title': 'Incorporate More Leafy Greens',
         'description': 'Add spinach, kale, or other leafy greens to at least one meal daily to boost your intake of vitamins K, A, and C.',
         'priority': 'Medium',
-        'priorityColor': Colors.orange.shade400,
       },
       {
         'title': 'Practice Mindful Eating',
         'description': 'Pay attention to your body\'s hunger cues. Eat slowly and savor your food to improve digestion and prevent overeating.',
         'priority': 'Medium',
-        'priorityColor': Colors.orange.shade400,
       },
       {
         'title': 'Establish a Consistent Sleep Schedule',
         'description': 'Go to bed and wake up around the same time every day, even on weekends, to regulate your body\'s internal clock. Aim for 7-9 hours of sleep.',
         'priority': 'High',
-        'priorityColor': Colors.red.shade400,
       },
       {
         'title': 'Reduce Processed Sugar Intake',
         'description': 'Limit sugary drinks, desserts, and processed snacks. Opt for whole fruits to satisfy your sweet cravings.',
         'priority': 'Low',
-        'priorityColor': Colors.green.shade400,
       },
     ];
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Recommendations'),
+        title: Text(
+          'Advice',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: AppTheme.titleHeaderGradient,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: badges.Badge(
+              badgeContent: const Text('3', style: TextStyle(color: Colors.white, fontSize: 10)),
+              child: const Icon(Icons.notifications_outlined),
+            ),
+            onPressed: () {
+               Navigator.of(context).push(MaterialPageRoute(builder: (context) => const NotificationsScreen()));
+            },
+          ),
+        ],
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16.0),
@@ -53,7 +69,6 @@ class RecommendationsScreen extends StatelessWidget {
             title: item['title'],
             description: item['description'],
             priority: item['priority'],
-            priorityColor: item['priorityColor'],
           );
         },
       ),
@@ -65,17 +80,32 @@ class _RecommendationCard extends StatelessWidget {
   final String title;
   final String description;
   final String priority;
-  final Color priorityColor;
 
   const _RecommendationCard({
     required this.title,
     required this.description,
     required this.priority,
-    required this.priorityColor,
   });
+
+  Color _getPriorityColor(BuildContext context, String priority) {
+    final theme = Theme.of(context);
+    switch (priority) {
+      case 'High Risk':
+      case 'High':
+        return theme.colorScheme.error;
+      case 'Medium':
+        return theme.colorScheme.secondary;
+      case 'Low':
+      default:
+        return AppTheme.actionGreen;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final priorityColor = _getPriorityColor(context, priority);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
@@ -84,14 +114,16 @@ class _RecommendationCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Text(
                     title,
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: theme.textTheme.titleLarge,
+                    softWrap: true,
                   ),
                 ),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
@@ -100,10 +132,10 @@ class _RecommendationCard extends StatelessWidget {
                   ),
                   child: Text(
                     priority,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: priorityColor,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: priorityColor,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -111,7 +143,7 @@ class _RecommendationCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               description,
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: theme.textTheme.bodyMedium,
             ),
           ],
         ),

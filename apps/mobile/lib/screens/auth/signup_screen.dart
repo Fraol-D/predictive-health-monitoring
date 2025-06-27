@@ -16,16 +16,19 @@ class _SignupScreenState extends State<SignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
   bool _showPassword = false;
   String _uiState = 'register'; // register, verifyEmail, verifyPhone
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -104,11 +107,14 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: _buildCurrentUI(),
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: _buildCurrentUI(),
+            ),
           ),
         ),
       ),
@@ -129,6 +135,55 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Widget _buildRegisterUI() {
     return Column(
+      key: const ValueKey('register'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        _buildHeader(),
+        const SizedBox(height: 48.0),
+        if (_errorMessage != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: Text(
+              _errorMessage!,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.error, fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        _buildNameField(),
+        const SizedBox(height: 16.0),
+        _buildEmailField(),
+        const SizedBox(height: 16.0),
+        _buildPasswordField(),
+        const SizedBox(height: 32.0),
+        if (!_isLoading)
+          GradientButton(
+            onPressed: _signupWithEmail,
+            text: 'Register with Email',
+            gradient: AppTheme.titleHeaderGradient,
+          ),
+        if (_isLoading) const Center(child: CircularProgressIndicator()),
+        const SizedBox(height: 24.0),
+        const Row(
+          children: [
+            Expanded(child: Divider()),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text('OR'),
+            ),
+            Expanded(child: Divider()),
+          ],
+        ),
+        const SizedBox(height: 16.0),
+        _buildSocialLoginButtons(),
+        const SizedBox(height: 32.0),
+        _buildLoginPrompt(context),
+      ],
+    );
+  }
+
+  Widget _buildHeader() {
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         const SizedBox(height: 60),
@@ -148,146 +203,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
         ),
-        const SizedBox(height: 48.0),
-        if (_errorMessage != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: Text(
-              _errorMessage!,
-              style: TextStyle(
-                  color: Theme.of(context).colorScheme.error, fontSize: 14),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        _buildNameField(),
-        const SizedBox(height: 16.0),
-        _buildEmailField(),
-        const SizedBox(height: 16.0),
-        _buildPasswordField(),
-        const SizedBox(height: 32.0),
-        GradientButton(
-          text: 'Register with Email',
-          onPressed: _isLoading ? () {} : _signupWithEmail,
-          gradient: AppTheme.secondaryGradient,
-          icon: Icons.email,
-        ),
-        const SizedBox(height: 24.0),
-        const Row(
-          children: [
-            Expanded(child: Divider()),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8.0),
-              child: Text('OR'),
-            ),
-            Expanded(child: Divider()),
-          ],
-        ),
-        const SizedBox(height: 24.0),
-        SocialButton(
-          text: 'Sign up with Google',
-          onPressed: _isLoading ? null : () { _signUpWithGoogle(); },
-        ),
-        const SizedBox(height: 48.0),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text("Already have an account?",
-                style: Theme.of(context).textTheme.bodyMedium),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Log In',
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildVerifyEmailUI() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Icon(Icons.email_outlined,
-            size: 80, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(height: 24),
-        Text(
-          'Verify Your Email',
-          textAlign: TextAlign.center,
-          style: Theme.of(context)
-              .textTheme
-              .headlineMedium
-              ?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'A verification link has been sent to your email address. Please check your inbox and click the link to continue.',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-        const SizedBox(height: 32),
-        GradientButton(
-          text: 'Back to Login',
-          gradient: AppTheme.secondaryGradient,
-          icon: Icons.arrow_back,
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildVerifyPhoneUI() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Icon(Icons.phone_android_outlined,
-            size: 80, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(height: 24),
-        Text(
-          'Add Your Phone Number',
-          textAlign: TextAlign.center,
-          style: Theme.of(context)
-              .textTheme
-              .headlineMedium
-              ?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'For your security, please add and verify your phone number for Multi-Factor Authentication (MFA).',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-        const SizedBox(height: 32.0),
-        TextFormField(
-          decoration: const InputDecoration(
-            labelText: 'Phone Number',
-            prefixIcon: Icon(Icons.phone),
-          ),
-          keyboardType: TextInputType.phone,
-        ),
-        const SizedBox(height: 24.0),
-        GradientButton(
-          text: 'Send Verification Code',
-          gradient: AppTheme.primaryGradient,
-          icon: Icons.send,
-          onPressed: () {
-            // TODO: Implement phone number verification logic
-            // This would involve calling a Firebase function or service
-            // For now, we'll just simulate success and go back to login
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text(
-                    'Phone verification not implemented yet. Returning to login.')));
-            Navigator.of(context).pop();
-          },
-        ),
       ],
     );
   }
@@ -296,10 +211,11 @@ class _SignupScreenState extends State<SignupScreen> {
     return TextFormField(
       controller: _nameController,
       decoration: InputDecoration(
-        labelText: 'Full Name',
+        labelText: 'Name',
         prefixIcon: Icon(Icons.person_outline,
             color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
+      keyboardType: TextInputType.text,
     );
   }
 
@@ -335,6 +251,112 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
       ),
       obscureText: !_showPassword,
+    );
+  }
+
+  Widget _buildConfirmPasswordField() {
+    return TextFormField(
+      controller: _confirmPasswordController,
+      decoration: InputDecoration(
+        labelText: 'Confirm Password',
+        prefixIcon: Icon(Icons.lock_outline,
+            color: Theme.of(context).colorScheme.onSurfaceVariant),
+      ),
+      obscureText: true,
+    );
+  }
+
+  Widget _buildSocialLoginButtons() {
+    return SocialButton(
+      text: 'Sign up with Google',
+      onPressed: _isLoading ? null : () { _signUpWithGoogle(); },
+    );
+  }
+
+  Widget _buildLoginPrompt(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text("Already have an account?",
+            style: Theme.of(context).textTheme.bodyMedium),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: Text('Log In',
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.bold)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVerifyEmailUI() {
+    return Column(
+      key: const ValueKey('verifyEmail'),
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Icon(Icons.mark_email_read_outlined,
+            size: 80, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(height: 24),
+        Text(
+          'Verify Your Email',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'A verification link has been sent to your email address. Please click the link to continue.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+        const SizedBox(height: 32),
+        GradientButton(
+          text: 'Back to Login',
+          gradient: AppTheme.titleHeaderGradient,
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVerifyPhoneUI() {
+    return Column(
+      key: const ValueKey('verifyPhone'),
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Icon(Icons.phonelink_ring_outlined,
+            size: 80, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(height: 24),
+        Text(
+          'Enter Verification Code',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'We have sent a verification code to your phone number.',
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 24),
+        const TextField(
+          decoration: InputDecoration(labelText: 'Verification Code'),
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 32),
+        GradientButton(
+          text: 'Send Verification Code',
+          gradient: AppTheme.actionButtonGradient,
+          onPressed: () {
+            // TODO: Implement phone number verification logic
+          },
+        ),
+      ],
     );
   }
 } 
