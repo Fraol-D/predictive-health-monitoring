@@ -45,10 +45,14 @@ const Navbar = () => {
         <div className="hidden md:flex items-center space-x-4">
           {!loading && user ? (
             <>
-              <Link href="/notifications" className="relative">
+              <Link href="/notifications" className="relative p-1">
                 <BellIcon className="w-6 h-6 text-muted-foreground hover:text-primary transition-colors" />
+                {/* Notification Badge */}
+                <div className="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center font-bold">
+                  3
+                </div>
               </Link>
-              <Link href="/profile">
+              <Link href="/profile" className="p-1">
                 <UserIcon className="w-6 h-6 text-muted-foreground hover:text-primary transition-colors" />
               </Link>
             </>
@@ -87,11 +91,15 @@ const Navbar = () => {
             ))}
             <div className="border-t border-border my-2"></div>
             {!loading && user ? (
-              <div className="flex items-center space-x-6">
+              <div className="flex flex-col space-y-4">
                  <Link href="/notifications" onClick={() => setIsMenuOpen(false)}>
-                  <div className="flex items-center gap-2 text-foreground hover:text-primary">
+                  <div className="relative flex items-center gap-2 text-foreground hover:text-primary">
                     <BellIcon className="w-6 h-6" />
                     <span>Notifications</span>
+                    {/* Notification Badge */}
+                    <div className="absolute top-0 left-5 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center font-bold">
+                      3
+                    </div>
                   </div>
                  </Link>
                  <Link href="/profile" onClick={() => setIsMenuOpen(false)}>

@@ -4,9 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import PageLayout from '@/components/layout/page-layout'; // Using the main layout
-import { Loader2, AlertTriangle, ChevronRight, Share2, ShieldCheck, PieChart, BarChart2 } from 'lucide-react'; // Added icons
-// import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-// import { ThemeToggleButton } from '@/components/theme-toggle-button'; // No longer needed here
+import { Loader2, AlertTriangle, ChevronRight, Share2, ShieldCheck, PieChart as PieChartIcon, BarChart2 } from 'lucide-react'; // Renamed PieChart to avoid conflict
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, Sector } from 'recharts';
 
 // Mock data structure (align with backend)
 interface ReportData {
@@ -46,26 +45,90 @@ const riskBgColors: Record<string, string> = {
   Unknown: 'bg-gray-100 dark:bg-gray-700/50',
 };
 
-// A more reusable and styled chart placeholder
-const SimpleBarChart = ({ data, title }: { data: Array<{ name: string; score: number; color: string }>, title: string }) => (
+// High-quality, reusable Pie Chart for risk visualization
+const RiskPieChart = ({ score }: { score: number }) => {
+  const data = [
+    { name: 'Risk', value: score },
+    { name: 'Safety', value: 100 - score },
+  ];
+  const COLORS = ['url(#riskGradient)', '#374151']; // Gradient for risk, gray for remainder
+
+  return (
+    <div className="w-full h-64">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <defs>
+            <linearGradient id="riskGradient" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="5%" stopColor="#8A2BE2" stopOpacity={0.9}/>
+              <stop offset="95%" stopColor="#FF69B4" stopOpacity={0.9}/>
+            </linearGradient>
+          </defs>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={80}
+            fill="#8884d8"
+            paddingAngle={5}
+            dataKey="value"
+            stroke="none"
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip 
+            contentStyle={{ 
+              background: 'rgba(30, 41, 59, 0.8)', 
+              borderColor: 'rgba(255, 255, 255, 0.2)',
+              borderRadius: '0.5rem'
+            }}
+          />
+          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-3xl font-bold fill-foreground">
+            {`${score}%`}
+          </text>
+           <text x="50%" y="65%" textAnchor="middle" dominantBaseline="middle" className="text-sm font-medium fill-muted-foreground">
+            Risk Score
+          </text>
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+
+// High-quality, reusable Bar Chart for trends/breakdowns
+const TrendsBarChart = ({ data, title }: { data: Array<{ name: string; score: number }>, title: string }) => (
     <div className="p-6 bg-card/80 backdrop-blur-md rounded-xl shadow-lg h-full">
       <h3 className="text-xl font-semibold mb-4 text-foreground/90 flex items-center"><BarChart2 className="w-5 h-5 mr-3 text-primary" />{title}</h3>
-      <div className="space-y-3">
-        {data.map((item) => (
-          <div key={item.name} className="flex items-center">
-            <span className="w-32 text-sm text-muted-foreground truncate">{item.name}</span>
-            <div className="flex-1 bg-slate-200 dark:bg-slate-700/50 rounded-full h-5">
-              <div 
-                style={{ width: `${item.score}%`, backgroundColor: item.color || 'hsl(var(--primary))' }}
-                className="h-5 rounded-full text-xs text-white/90 flex items-center justify-end pr-2 font-bold transition-all duration-500 ease-out">
-                {item.score}%
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="w-full h-80">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+            <defs>
+                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8A2BE2" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#FF69B4" stopOpacity={0.8}/>
+                </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+            <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
+            <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}%`} />
+            <Tooltip 
+              cursor={{ fill: 'rgba(138, 43, 226, 0.1)' }}
+              contentStyle={{ 
+                background: 'rgba(30, 41, 59, 0.9)', 
+                borderColor: 'rgba(255, 255, 255, 0.2)',
+                borderRadius: '0.5rem'
+              }}
+            />
+            <Bar dataKey="score" fill="url(#barGradient)" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
+
 
 const ReportDetailsView = () => {
   const params = useParams();
@@ -198,41 +261,48 @@ const ReportDetailsView = () => {
 
         {/* Detailed Report Sections */}
         <section className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* Key Metrics on the left */}
-          <div className="lg:col-span-2 p-6 bg-card/80 backdrop-blur-md rounded-xl shadow-lg">
-            <h3 className="text-xl font-semibold mb-4 text-foreground/90 flex items-center"><PieChart className="w-5 h-5 mr-3 text-primary"/>Key Health Indicators</h3>
-            <ul className="space-y-3 text-md">
-              {reportData.detailedReport.bloodPressure && (
-                <li className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Blood Pressure:</span> 
-                  <span className={`font-semibold ${reportData.detailedReport.bloodPressure.status === 'Normal' ? 'text-green-500' : 'text-yellow-400'}`}>{reportData.detailedReport.bloodPressure.value}</span>
-                </li>
-              )}
-              {reportData.detailedReport.cholesterol && (
-                 <li className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Cholesterol:</span> 
-                  <span className={`font-semibold ${reportData.detailedReport.cholesterol.status === 'Normal' ? 'text-green-500' : 'text-yellow-400'}`}>{reportData.detailedReport.cholesterol.value}</span>
-                </li>
-              )}
-              {reportData.detailedReport.dietQuality && (
-                <li className="flex justify-between items-center"><span className="text-muted-foreground">Diet Quality:</span> <span className="font-semibold">{reportData.detailedReport.dietQuality}</span></li>
-              )}
-              {reportData.detailedReport.activityLevel && (
-                <li className="flex justify-between items-center"><span className="text-muted-foreground">Activity Level:</span> <span className="font-semibold">{reportData.detailedReport.activityLevel}</span></li>
-              )}
-              {reportData.detailedReport.lifestyleFactors?.map(factor => (
-                 <li key={factor.factor} className="flex justify-between items-center">
-                   <span className="text-muted-foreground">{factor.factor}:</span> 
-                   <span className={`font-semibold ${factor.impact === 'Positive' ? 'text-green-500' : 'text-red-500'}`}>{factor.status}</span>
-                </li>
-              ))}
-            </ul>
+          {/* Key Metrics and Pie Chart on the left */}
+          <div className="lg:col-span-2 space-y-8">
+            <div className="p-6 bg-card/80 backdrop-blur-md rounded-xl shadow-lg">
+                <h3 className="text-xl font-semibold mb-4 text-foreground/90 flex items-center"><PieChartIcon className="w-5 h-5 mr-3 text-primary"/>Risk Overview</h3>
+                <RiskPieChart score={reportData.riskScore} />
+            </div>
+
+            <div className="p-6 bg-card/80 backdrop-blur-md rounded-xl shadow-lg">
+              <h3 className="text-xl font-semibold mb-4 text-foreground/90">Key Health Indicators</h3>
+              <ul className="space-y-3 text-md">
+                {reportData.detailedReport.bloodPressure && (
+                  <li className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Blood Pressure:</span> 
+                    <span className={`font-semibold ${reportData.detailedReport.bloodPressure.status === 'Normal' ? 'text-green-500' : 'text-yellow-400'}`}>{reportData.detailedReport.bloodPressure.value}</span>
+                  </li>
+                )}
+                {reportData.detailedReport.cholesterol && (
+                   <li className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Cholesterol:</span> 
+                    <span className={`font-semibold ${reportData.detailedReport.cholesterol.status === 'Normal' ? 'text-green-500' : 'text-yellow-400'}`}>{reportData.detailedReport.cholesterol.value}</span>
+                  </li>
+                )}
+                {reportData.detailedReport.dietQuality && (
+                  <li className="flex justify-between items-center"><span className="text-muted-foreground">Diet Quality:</span> <span className="font-semibold">{reportData.detailedReport.dietQuality}</span></li>
+                )}
+                {reportData.detailedReport.activityLevel && (
+                  <li className="flex justify-between items-center"><span className="text-muted-foreground">Activity Level:</span> <span className="font-semibold">{reportData.detailedReport.activityLevel}</span></li>
+                )}
+                {reportData.detailedReport.lifestyleFactors?.map(factor => (
+                   <li key={factor.factor} className="flex justify-between items-center">
+                     <span className="text-muted-foreground">{factor.factor}:</span> 
+                     <span className={`font-semibold ${factor.impact === 'Positive' ? 'text-green-500' : 'text-red-500'}`}>{factor.status}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
-          {/* Placeholder for Charts on the right */}
+          {/* Bar Chart for Risk Breakdown on the right */}
           {reportData.detailedReport.chartsData?.categoryBreakdown && (
             <div className="lg:col-span-3">
-              <SimpleBarChart data={reportData.detailedReport.chartsData.categoryBreakdown} title="Risk Factor Breakdown" />
+              <TrendsBarChart data={reportData.detailedReport.chartsData.categoryBreakdown} title="Risk Factor Breakdown" />
             </div>
           )}
         </section>
