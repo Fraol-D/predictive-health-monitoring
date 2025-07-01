@@ -1,27 +1,23 @@
 import React from 'react';
-import Navbar from './navbar';
+import Navbar from "./navbar";
 
 interface PageLayoutProps {
-  children: React.ReactNode;
-  className?: string;
-  centeredContent?: boolean;
-  showNavbar?: boolean;
+    children: React.ReactNode;
+    title?: string;
 }
 
-const PageLayout = ({ children, className = '', centeredContent = false, showNavbar = true }: PageLayoutProps) => {
-  return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col items-center p-4 md:p-8">
-      {showNavbar && <Navbar />}
-      <main className={`w-full max-w-6xl ${centeredContent ? 'flex flex-col items-center justify-center flex-1' : ''} ${className}`}>
-        {children}
-      </main>
-      {showNavbar && (
-        <footer className="w-full max-w-6xl mt-12 pt-8 border-t border-border text-center text-muted-foreground text-sm">
-          <p>&copy; {new Date().getFullYear()} Predictive Health Monitoring. All rights reserved.</p>
-        </footer>
-      )}
-    </div>
-  );
-};
-
-export default PageLayout; 
+export default function PageLayout({ children, title }: PageLayoutProps) {
+    return (
+        <div className="flex flex-col min-h-screen items-center">
+            <Navbar />
+            <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+                {title && (
+                     <header className="w-full mb-12">
+                        <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">{title}</h1>
+                     </header>
+                )}
+                {children}
+            </main>
+        </div>
+    );
+} 

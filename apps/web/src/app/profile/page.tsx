@@ -1,178 +1,264 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/providers/auth-provider';
 import PageLayout from '@/components/layout/page-layout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
 import { 
-    CalendarDays, Edit3, User, Settings, ShieldCheck, 
-    ChevronRight, LogOut, Bell, Palette, Languages, BookOpenCheck, Share2 
+    Settings, ShieldCheck, 
+    LogOut, Bell, Palette, Languages, Share2 
 } from 'lucide-react';
+import Link from 'next/link';
 
-const ProfilePage = () => {
-  // Mock data - in a real app, this would come from a context or a hook
-  const user = {
-    name: 'Alex Doe',
-    email: 'alex.doe@example.com',
-    joinDate: '2023-01-15',
-    preferences: {
-        theme: 'System',
-        receiveNotifications: true,
-        language: 'English (US)',
+
+// This should align with the Mongoose User schema
+interface UserProfile {
+  _id: string; // MongoDB ObjectId
+  firebaseUID: string;
+  name: string;
+  email: string;
+  age?: number;
+  gender?: string;
+  profileImage?: string;
+  createdAt: string;
+}
+
+export default function ProfilePage() {
+  const { user, loading: authLoading, logout } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (authLoading) {
+      return; // Wait for Firebase auth to initialize
+    }
+    if (!user) {
+      setLoading(false); // Not logged in, so no profile to fetch
+      return;
+    }
+
+    const fetchProfile = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`http://localhost:3001/api/users/firebase/${user.uid}`);
+        if (response.status === 404) {
+          // Profile doesn't exist, stay on the "create" screen
+          setProfile(null);
+          setIsEditing(true); // Default to edit mode for creation
+        } else if (!response.ok) {
+          throw new Error('Failed to fetch profile data.');
+        } else {
+          const data: UserProfile = await response.json();
+          setProfile(data);
+          setIsEditing(false);
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [user, authLoading]);
+
+  const handleSaveProfile = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!user) return;
+
+    const formData = new FormData(e.currentTarget);
+    const updatedData = {
+      name: formData.get('name') as string,
+      age: Number(formData.get('age')) || undefined,
+      gender: formData.get('gender') as string,
+    };
+
+    try {
+      const url = profile 
+        ? `http://localhost:3001/api/users/${profile._id}`
+        : 'http://localhost:3001/api/users';
+
+      const method = profile ? 'PATCH' : 'POST';
+
+      const body = profile 
+        ? JSON.stringify(updatedData)
+        : JSON.stringify({ ...updatedData, firebaseUID: user.uid, email: user.email });
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to ${profile ? 'update' : 'create'} profile.`);
+      }
+
+      const savedProfile: UserProfile = await response.json();
+      setProfile(savedProfile);
+      setIsEditing(false);
+
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
-  const pastAssessments = [
-    { id: 'assess456', date: '2024-01-22', type: 'Diabetes Risk', riskLevel: 'Medium', reportLink: '/report/mockReportId002' },
-    { id: 'assess123', date: '2023-11-05', type: 'General Wellness', riskLevel: 'Low', reportLink: '/report/mockReportId003' },
-  ];
-
-  const riskBadgeStyles: Record<string, string> = {
-    High: 'bg-red-900/50 text-red-300 border border-red-500/50',
-    Medium: 'bg-yellow-800/50 text-yellow-300 border border-yellow-500/50',
-    Low: 'bg-green-900/50 text-green-300 border border-green-500/50',
+  const getInitials = (name?: string) => {
+    return name ? name.split(' ').map((n) => n[0]).join('') : '';
+  };
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Redirect or state update will be handled by AuthProvider
+    } catch (error) {
+      console.error("Failed to log out", error);
+    }
   };
 
+
+  if (loading || authLoading) {
+    return <PageLayout><div className="flex justify-center items-center h-full">Loading profile...</div></PageLayout>;
+  }
+
+  if (!user) {
+      return (
+          <PageLayout>
+              <div className="text-center">
+                  <p>Please log in to view your profile.</p>
+                  <Link href="/auth/login" className="text-primary hover:underline">Go to Login</Link>
+              </div>
+          </PageLayout>
+      );
+  }
+
+  if (error) {
+    return <PageLayout><div className="flex justify-center items-center h-full text-red-500">Error: {error}</div></PageLayout>;
+  }
+
+  // Main render logic
   return (
     <PageLayout>
-        <header className="w-full mb-12">
-            <h2 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">User Profile</h2>
-            <p className="text-xl text-muted-foreground">
-                Manage your account information and preferences.
-            </p>
-        </header>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            {/* Left Column - User Info and Actions */}
             <div className="lg:col-span-1 space-y-8">
                 {/* User Info Card */}
-                <section className="bg-card/80 backdrop-blur-md p-6 rounded-xl shadow-lg text-center">
-                    <div className="w-24 h-24 rounded-full bg-primary/20 mx-auto flex items-center justify-center mb-4 border-2 border-primary/30">
-                        <User className="w-12 h-12 text-primary" />
-          </div>
-                    <h3 className="text-2xl font-semibold">{user.name}</h3>
-                    <p className="text-muted-foreground">{user.email}</p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                        Member since {new Date(user.joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
-                    </p>
-        </section>
+                <Card>
+                    <CardHeader className="text-center">
+                      <Avatar className="w-24 h-24 mx-auto mb-4">
+                          <AvatarImage src={profile?.profileImage || user.photoURL || ''} alt={profile?.name || ''} />
+                          <AvatarFallback className="text-3xl">{getInitials(profile?.name || user.displayName || '')}</AvatarFallback>
+                      </Avatar>
+                      <CardTitle className="text-2xl">{profile?.name || 'New User'}</CardTitle>
+                      <CardDescription>{user.email}</CardDescription>
+                    </CardHeader>
+                </Card>
 
                 {/* Actions Card */}
-                <section className="bg-card/80 backdrop-blur-md p-6 rounded-xl shadow-lg">
-                    <h3 className="text-xl font-semibold mb-4 border-b border-border/20 pb-3">Actions</h3>
-                    <div className="space-y-3">
-                        <button className="w-full flex items-center text-left p-3 rounded-lg hover:bg-card transition-colors">
-                            <Edit3 className="w-5 h-5 mr-4 text-primary" />
-                            <span>Edit Profile</span>
-            </button>
-                        <button className="w-full flex items-center text-left p-3 rounded-lg hover:bg-card transition-colors">
-                            <ShieldCheck className="w-5 h-5 mr-4 text-primary" />
-                            <span>Security & Password</span>
-                        </button>
-                        <Link href="/data-sharing" className="w-full flex items-center text-left p-3 rounded-lg hover:bg-card transition-colors">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="text-xl">Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                         <Link href="/data-sharing" className="w-full flex items-center text-left p-3 rounded-lg hover:bg-muted transition-colors">
                             <Share2 className="w-5 h-5 mr-4 text-primary" />
                             <span>Share Your Data</span>
                         </Link>
-                        <button className="w-full flex items-center text-left p-3 rounded-lg hover:bg-destructive/10 transition-colors">
+                        <button onClick={handleLogout} className="w-full flex items-center text-left p-3 rounded-lg hover:bg-destructive/10 transition-colors">
                             <LogOut className="w-5 h-5 mr-4 text-destructive" />
                             <span className="text-destructive">Log Out</span>
-            </button>
-          </div>
-        </section>
+                        </button>
+                    </CardContent>
+                </Card>
             </div>
 
-            {/* Right Column - Assessments and Settings */}
             <div className="lg:col-span-2 space-y-8">
-                {/* Past Assessments Section */}
-                <section className='bg-card/80 backdrop-blur-md rounded-xl shadow-lg'>
-                    <header className="p-6 flex justify-between items-center border-b border-border/20">
-                        <h2 className='text-2xl font-semibold flex items-center'>
-                            <CalendarDays className='w-6 h-6 text-primary mr-3' /> Past Assessments
-                        </h2>
-                        {pastAssessments.length > 0 && (
-                             <Link href='/history' className='text-sm text-primary hover:underline flex items-center'>
-                                View All <ChevronRight className='w-4 h-4 ml-1' />
-                            </Link>
+                {/* Profile Form/Display Section */}
+                <Card>
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle className='text-2xl'>
+                          {isEditing ? 'Edit Profile' : 'Your Information'}
+                        </CardTitle>
+                        {!isEditing && profile && (
+                          <Button variant="outline" onClick={() => setIsEditing(true)}>Edit</Button>
                         )}
-                    </header>
-                    <div className='overflow-x-auto'>
-                        <table className='w-full text-left'>
-                            <tbody>
-                                {pastAssessments.length > 0 ? (
-                                pastAssessments.map((assessment) => (
-                                    <tr key={assessment.id} className="border-b border-border/20 last:border-b-0 hover:bg-card/50 transition-colors">
-                                        <td className='px-6 py-4 whitespace-nowrap'>
-                                            <div className="font-semibold">{assessment.type}</div>
-                                            <div className="text-sm text-muted-foreground">{new Date(assessment.date).toLocaleDateString()}</div>
-                                        </td>
-                                        <td className='px-6 py-4 whitespace-nowrap text-sm text-center'>
-                                            <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${riskBadgeStyles[assessment.riskLevel]}`}>
-                                            {assessment.riskLevel}
-                                            </span>
-                                        </td>
-                                        <td className='px-6 py-4 whitespace-nowrap text-sm text-right'>
-                                            <Link href={assessment.reportLink} className='text-primary hover:underline inline-flex items-center text-xs font-semibold'>
-                                                <BookOpenCheck className="w-4 h-4 mr-1.5"/> View Report
-                                            </Link>
-                                        </td>
-                                    </tr>
-                                ))
-                                ) : (
-                                <tr>
-                                    <td colSpan={3} className='p-8 text-center text-muted-foreground'>No past assessments found.</td>
-                                </tr>
-                                )}
-                            </tbody>
-                        </table>
-          </div>
-        </section>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {isEditing ? (
+                        <form onSubmit={handleSaveProfile} className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                              <Label htmlFor="name">Name</Label>
+                              <Input id="name" name="name" defaultValue={profile?.name || user.displayName || ''} required />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="email">Email</Label>
+                              <Input id="email" type="email" value={user.email || ''} disabled />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="age">Age</Label>
+                              <Input id="age" name="age" type="number" defaultValue={profile?.age} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="gender">Gender</Label>
+                              <Input id="gender" name="gender" defaultValue={profile?.gender} />
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            {profile && <Button type="button" variant="ghost" onClick={() => setIsEditing(false)}>Cancel</Button>}
+                            <Button type="submit" className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white">
+                              Save Profile
+                            </Button>
+                          </div>
+                        </form>
+                      ) : (
+                        <div className="space-y-4">
+                            <div>
+                                <h4 className="font-semibold">Name</h4>
+                                <p className="text-muted-foreground">{profile?.name}</p>
+                            </div>
+                             <div>
+                                <h4 className="font-semibold">Age</h4>
+                                <p className="text-muted-foreground">{profile?.age || 'Not set'}</p>
+                            </div>
+                            <div>
+                                <h4 className="font-semibold">Gender</h4>
+                                <p className="text-muted-foreground">{profile?.gender || 'Not set'}</p>
+                            </div>
+                        </div>
+                      )}
+                    </CardContent>
+                </Card>
 
                 {/* Settings Section */}
-                <section className="bg-card/80 backdrop-blur-md p-6 rounded-xl shadow-lg">
-                     <h2 className='text-2xl font-semibold mb-4 flex items-center border-b border-border/20 pb-4'>
-                        <Settings className='w-6 h-6 text-primary mr-3' /> App Settings
-            </h2>
-                    <div className='space-y-6'>
-                        <div className='flex items-center justify-between'>
-                            <div className="flex items-center">
-                                <Palette className="w-5 h-5 mr-4 text-muted-foreground"/>
-              <div>
-                                    <h3 className='text-lg font-medium'>Theme</h3>
-                                    <p className='text-sm text-muted-foreground'>Current: {user.preferences.theme}</p>
-              </div>
-              </div>
-                            <ThemeToggleButton />
-              </div>
-                         <div className='flex items-center justify-between'>
-                            <div className="flex items-center">
-                                <Bell className="w-5 h-5 mr-4 text-muted-foreground"/>
-              <div>
-                                    <h3 className='text-lg font-medium'>Notifications</h3>
-                                    <p className='text-sm text-muted-foreground'>{user.preferences.receiveNotifications ? 'Enabled' : 'Disabled'}</p>
-              </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className='text-2xl'>App Settings</CardTitle>
+                    </CardHeader>
+                    <CardContent className='space-y-6'>
+                       {/* Simplified Settings Display */}
+                       <div className='flex items-center justify-between'>
+                           <div className="flex items-center">
+                               <Palette className="w-5 h-5 mr-4 text-muted-foreground"/>
+                               <div>
+                                   <h3 className='text-lg font-medium'>Theme</h3>
+                                   <p className='text-sm text-muted-foreground'>System</p>
+                               </div>
+                           </div>
+                           <ThemeToggleButton />
+                       </div>
+                    </CardContent>
+                </Card>
             </div>
-                            <button className="px-4 py-1.5 text-sm rounded-md transition-colors bg-primary/10 hover:bg-primary/20 text-primary-foreground">
-                                Toggle
-                            </button>
-              </div>
-                        <div className='flex items-center justify-between'>
-                             <div className="flex items-center">
-                                <Languages className="w-5 h-5 mr-4 text-muted-foreground"/>
-              <div>
-                                    <h3 className='text-lg font-medium'>Language</h3>
-                                    <p className='text-sm text-muted-foreground'>Current: {user.preferences.language}</p>
-              </div>
-            </div>
-                            <button className="px-4 py-1.5 text-sm rounded-md transition-colors bg-primary/10 hover:bg-primary/20 text-primary-foreground" disabled>
-                                Change
-                            </button>
-              </div>
-            </div>
-          </section>
-            </div>
-      </div>
+        </div>
     </PageLayout>
   );
-};
-
-export default ProfilePage; 
+} 
