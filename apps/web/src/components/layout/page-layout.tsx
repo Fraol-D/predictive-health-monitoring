@@ -1,5 +1,6 @@
 import React from 'react';
 import Navbar from "./navbar";
+import { FloatingActionButton, useFabVisibility } from '../ui/floating-action-button';
 
 interface PageLayoutProps {
     children: React.ReactNode;
@@ -7,6 +8,8 @@ interface PageLayoutProps {
 }
 
 export default function PageLayout({ children, title }: PageLayoutProps) {
+    const isFabVisible = useFabVisibility();
+
     return (
         <div className="flex flex-col min-h-screen items-center">
             <Navbar />
@@ -18,6 +21,7 @@ export default function PageLayout({ children, title }: PageLayoutProps) {
                 )}
                 {children}
             </main>
+            {isFabVisible && <FloatingActionButton />}
         </div>
     );
 } 

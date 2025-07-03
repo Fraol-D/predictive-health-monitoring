@@ -50,12 +50,10 @@ const DataSharingPage = () => {
   return (
     <PageLayout>
       <div className="mb-8">
-        <Button asChild className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold shadow-md hover:from-purple-600 hover:to-pink-600 transition-transform transform hover:scale-105">
-            <Link href="/profile">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Profile
-            </Link>
-        </Button>
+        <Link href="/" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Link>
       </div>
 
       <div className="max-w-4xl mx-auto">
