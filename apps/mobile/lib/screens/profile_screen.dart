@@ -1,12 +1,67 @@
 import 'package:flutter/material.dart';
+import 'package:predictive_health_monitoring/models/user_profile.dart';
 import 'package:predictive_health_monitoring/screens/data_sharing_screen.dart';
+import 'package:predictive_health_monitoring/screens/edit_profile_screen.dart';
 import 'package:predictive_health_monitoring/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:predictive_health_monitoring/services/auth_service.dart';
 import 'package:predictive_health_monitoring/screens/notifications_screen.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  late Future<UserProfile?> _userProfileFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _userProfileFuture = _fetchUserProfile();
+      setState(() {});
+    });
+  }
+
+  Future<UserProfile?> _fetchUserProfile() async {
+    final user = Provider.of<AuthService>(context, listen: false).currentUser;
+    if (user == null) return null;
+
+    try {
+      final response = await http.get(
+          Uri.parse('http://10.0.2.2:3001/api/users/firebase/${user.uid}'));
+      if (response.statusCode == 200) {
+        return UserProfile.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 404) {
+        return UserProfile(
+          firebaseUID: user.uid,
+          name: user.displayName ?? 'New User',
+          email: user.email!,
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load profile: ${e.toString()}')));
+    }
+    return null;
+  }
+
+  void _navigateToEditProfile() async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+    );
+
+    if (result == true) {
+      setState(() {
+        _userProfileFuture = _fetchUserProfile();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +112,7 @@ class ProfileScreen extends StatelessWidget {
                   context,
                   icon: Icons.person_outline,
                   title: 'Account Details',
-                  onTap: () {},
+                  onTap: _navigateToEditProfile,
                 ),
                 _buildListTile(
                   context,
@@ -77,25 +132,26 @@ class ProfileScreen extends StatelessWidget {
                         builder: (context) => const DataSharingScreen()));
                   },
                 ),
-                 _buildListTile(
+                _buildListTile(
                   context,
                   icon: Icons.logout,
                   title: 'Sign Out',
                   onTap: () async {
-                    await Provider.of<AuthService>(context, listen: false).signOut();
+                    await Provider.of<AuthService>(context, listen: false)
+                        .signOut();
                   },
                 ),
               ],
             ),
-             const SizedBox(height: 24),
-             Padding(
-               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-               child: Text(
-                 'Version 1.0.0',
-                 textAlign: TextAlign.center,
-                 style: theme.textTheme.bodySmall,
-               ),
-             )
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Version 1.0.0',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall,
+              ),
+            )
           ],
         ),
       ),
@@ -106,26 +162,50 @@ class ProfileScreen extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 50,
-          backgroundColor: colorScheme.primaryContainer,
-          child: Text(
-            'JD', // Placeholder initials
-            style: textTheme.displaySmall?.copyWith(color: colorScheme.onPrimaryContainer),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'John Doe', // Placeholder name
-          style: textTheme.headlineSmall,
-        ),
-        Text(
-          'john.doe@example.com', // Placeholder email
-          style: textTheme.bodyMedium,
-        ),
-      ],
+    return FutureBuilder<UserProfile?>(
+      future: _userProfileFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError || !snapshot.hasData) {
+          return const Center(child: Text('Could not load profile.'));
+        }
+
+        final profile = snapshot.data!;
+        final initials = profile.name.isNotEmpty
+            ? profile.name.split(' ').map((e) => e[0]).take(2).join()
+            : 'NU';
+
+        return Column(
+          children: [
+            CircleAvatar(
+              radius: 50,
+              backgroundColor: colorScheme.primaryContainer,
+              backgroundImage: (profile.profileImage != null &&
+                      profile.profileImage!.isNotEmpty)
+                  ? NetworkImage(profile.profileImage!)
+                  : null,
+              child: (profile.profileImage == null ||
+                      profile.profileImage!.isEmpty)
+                  ? Text(
+                      initials.toUpperCase(),
+                      style: textTheme.displaySmall
+                          ?.copyWith(color: colorScheme.onPrimaryContainer),
+                    )
+                  : null,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              profile.name,
+              style: textTheme.headlineSmall,
+            ),
+            Text(
+              profile.email,
+              style: textTheme.bodyMedium,
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -165,4 +245,4 @@ class ProfileScreen extends StatelessWidget {
       onTap: onTap,
     );
   }
-} 
+}

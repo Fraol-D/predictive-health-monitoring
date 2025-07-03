@@ -4,7 +4,6 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/providers/auth-provider";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import Fab from "@/components/ui/fab";
 
 interface AppBodyProps {
   children: React.ReactNode;
@@ -30,7 +29,6 @@ export function AppBody({ children }: AppBodyProps) {
           >
             <div className="relative flex min-h-screen flex-col">
               <main className="flex-1">{children}</main>
-              <Fab />
             </div>
           </ThemeProvider>
         </AuthProvider>

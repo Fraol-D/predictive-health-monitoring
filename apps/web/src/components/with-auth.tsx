@@ -12,7 +12,7 @@ export function withAuth<P extends object>(WrappedComponent: ComponentType<P>) {
 
     useEffect(() => {
       if (!loading && !user) {
-        router.push('/login');
+        router.push('/auth/login');
       }
     }, [user, loading, router]);
 
