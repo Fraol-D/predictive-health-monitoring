@@ -22,7 +22,7 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="w-full max-w-6xl mb-8 p-3 bg-card/80 backdrop-blur-md rounded-xl shadow-lg relative">
+    <nav className="w-full max-w-6xl my-4 p-3 bg-card/80 backdrop-blur-md rounded-xl shadow-lg relative">
       <div className="container mx-auto flex justify-between items-center">
         <Link href="/" className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">
           Predictive Health
@@ -57,7 +57,7 @@ const Navbar = () => {
               </Link>
             </>
           ) : !loading ? (
-            <Link href="/login">
+            <Link href="/auth/login">
               <button className="px-4 py-2 text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90">
                 Login
               </button>
@@ -110,7 +110,7 @@ const Navbar = () => {
                  </Link>
               </div>
             ) : !loading ? (
-              <Link href="/login">
+              <Link href="/auth/login">
                 <button className="w-full px-4 py-2 text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90">
                   Login
                 </button>

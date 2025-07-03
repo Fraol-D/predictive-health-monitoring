@@ -6,6 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import PageLayout from '@/components/layout/page-layout';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import Link from 'next/link';
+import { ArrowLeft, FileText } from 'lucide-react';
 
 const DataSharingPage = () => {
   const [shareOptions, setShareOptions] = useState({
@@ -44,66 +48,70 @@ const DataSharingPage = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
-      <div className="flex flex-col items-start mb-8">
-        <div className="p-3 bg-primary/10 rounded-full mb-4">
-          <Share2 className="w-8 h-8 text-primary" />
-        </div>
-        <h1 className="text-3xl font-bold">Share with Your Provider</h1>
-        <p className="text-muted-foreground mt-2">
-          Select the categories of health data you wish to share. This information will be sent securely to your healthcare provider.
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <h2 className="text-sm font-semibold text-muted-foreground tracking-widest">DATA CATEGORIES</h2>
-        <div className="p-6 bg-card rounded-xl border">
-          <ul className="divide-y divide-border">
-            {Object.entries(shareOptions).map(([key, value]) => (
-              <li key={key} className="flex items-center justify-between py-4">
-                <Label htmlFor={key} className="font-medium text-base">{key}</Label>
-                <Switch
-                  id={key}
-                  checked={value}
-                  onCheckedChange={(checked: boolean) =>
-                    setShareOptions((prev) => ({ ...prev, [key]: checked }))
-                  }
-                />
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      <div className="mt-8 p-6 bg-card rounded-xl border flex items-start space-x-4">
-        <Checkbox 
-            id="consent" 
-            checked={consentGiven}
-            onCheckedChange={(checked: boolean) => setConsentGiven(checked)}
-            className="mt-1"
-        />
-        <div className="grid gap-1.5 leading-none">
-            <label htmlFor="consent" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                I consent to share the selected health data with my healthcare provider for medical review.
-            </label>
-        </div>
-      </div>
-
-      <div className="mt-8">
-        <Button
-          onClick={handleShare}
-          disabled={isSharing || !consentGiven}
-          className="w-full text-lg font-bold py-7 bg-gradient-to-r from-[#a13de0] to-[#ff5177] text-white hover:opacity-90 transition-opacity"
-        >
-          {isSharing ? (
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          ) : (
-            <ShieldCheck className="mr-2 h-5 w-5" />
-          )}
-          {isSharing ? 'SHARING...' : 'Share Data Securely'}
+    <PageLayout>
+      <div className="mb-8">
+        <Button asChild className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold shadow-md hover:from-purple-600 hover:to-pink-600 transition-transform transform hover:scale-105">
+            <Link href="/profile">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Profile
+            </Link>
         </Button>
       </div>
-    </div>
+
+      <div className="max-w-4xl mx-auto">
+        <header className="text-center mb-12">
+          <h1 className="text-4xl font-bold tracking-tight">Data Sharing & Reports</h1>
+          <p className="mt-4 text-lg text-muted-foreground">
+            Securely share your health assessment data with healthcare providers or export it for your records.
+          </p>
+        </header>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          <Card className="flex flex-col">
+            <CardHeader>
+              <div className="flex justify-center mb-4">
+                  <div className="p-4 bg-primary/10 rounded-full">
+                      <Share2 className="w-8 h-8 text-primary" />
+                  </div>
+              </div>
+              <CardTitle className="text-center text-2xl">Share with a Provider</CardTitle>
+              <CardDescription className="text-center">
+                Generate a secure, temporary link to share a snapshot of your latest health assessment.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow flex flex-col items-center justify-center">
+              <p className="text-sm text-muted-foreground mb-4">This feature is coming soon.</p>
+              <Button disabled>Generate Secure Link</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="flex flex-col">
+            <CardHeader>
+               <div className="flex justify-center mb-4">
+                  <div className="p-4 bg-primary/10 rounded-full">
+                      <FileText className="w-8 h-8 text-primary" />
+                  </div>
+              </div>
+              <CardTitle className="text-center text-2xl">Export as PDF</CardTitle>
+              <CardDescription className="text-center">
+                Download a comprehensive PDF report of your health data for offline access or printing.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow flex flex-col items-center justify-center">
+               <p className="text-sm text-muted-foreground mb-4">This feature is coming soon.</p>
+              <Button disabled>Download PDF Report</Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="mt-12 text-center text-muted-foreground text-sm">
+            <p className='font-semibold'>Your privacy is our priority.</p>
+            <p>
+                Data is only shared when you explicitly choose to, and all exports are handled securely.
+            </p>
+        </div>
+      </div>
+    </PageLayout>
   );
 };
 
