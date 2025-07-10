@@ -8,13 +8,19 @@ const NotificationSchema = new Schema({
     required: true,
     index: true,
   },
+  notificationId: { // A unique ID for the notification
+    type: String,
+    required: true,
+    unique: true,
+    index: true,
+  },
   message: {
     type: String,
     required: true,
   },
   type: {
     type: String,
-    enum: ['info', 'warning', 'alert', 'recommendation'],
+    enum: ['info', 'warning', 'alert', 'recommendation', 'system'], // Added 'system' type
     default: 'info',
   },
   isRead: {

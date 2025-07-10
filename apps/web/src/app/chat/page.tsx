@@ -18,19 +18,24 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from '../../providers/auth-provider'; // Import useAuth
 
 // Define types
 interface Message {
   id: string;
   text: string;
   sender: 'user' | 'ai';
+  timestamp: number;
 }
 
 interface ChatSession {
-  id: string;
+  _id?: string; // MongoDB _id
+  id: string; // Frontend generated UUID
+  userId: string; // Firebase UID initially, then MongoDB _id
   title: string;
   messages: Message[];
-  timestamp: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const ChatPage = () => {
@@ -42,44 +47,55 @@ const ChatPage = () => {
   
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  
+  const { user } = useAuth(); // Get the current authenticated user
+
   // Memoize active chat messages
   const activeMessages = React.useMemo(() => {
     return activeChatId ? chats[activeChatId]?.messages ?? [] : [];
   }, [chats, activeChatId]);
 
-  // --- LOCAL STORAGE & CHAT MANAGEMENT ---
-  useEffect(() => {
+  // --- CHAT MANAGEMENT ---
+  const fetchChats = useCallback(async () => {
+    if (!user) return;
     try {
-      // Set sidebar state based on screen size
-      const isMobile = window.innerWidth < 768;
-      setSidebarOpen(!isMobile);
+      const response = await fetch(`/api/chat/user/${user.uid}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch chats: ${response.status}`);
+      }
+      const data = await response.json();
+      const fetchedChats: Record<string, ChatSession> = {};
+      data.forEach((chat: ChatSession) => {
+        fetchedChats[chat.id] = chat; // Use frontend-generated `id` as key
+      });
+      setChats(fetchedChats);
 
-      const savedChats = localStorage.getItem('chatHistory');
-      if (savedChats) {
-        setChats(JSON.parse(savedChats));
+      // Set active chat if none is active or if the previously active one exists
+      if (!activeChatId && data.length > 0) {
+        setActiveChatId(data[0].id); // Set the most recent chat as active
+      } else if (activeChatId && !fetchedChats[activeChatId]) {
+        // If previously active chat was deleted or doesn't exist, select the most recent one
+        if (data.length > 0) {
+          setActiveChatId(data[0].id);
+        } else {
+          setActiveChatId(null); // No chats, stay in new chat state
+        }
       }
-      const lastActiveId = localStorage.getItem('activeChatId');
-      if (lastActiveId) {
-        setActiveChatId(lastActiveId);
-      }
+
     } catch (error) {
-      console.error("Failed to load chats from localStorage", error);
+      console.error("Failed to load chats:", error);
     }
-  }, []);
+  }, [user, activeChatId]);
 
   useEffect(() => {
-    try {
-      if (Object.keys(chats).length > 0) {
-        localStorage.setItem('chatHistory', JSON.stringify(chats));
-      }
-      if (activeChatId) {
-        localStorage.setItem('activeChatId', activeChatId);
-      }
-    } catch (error) {
-       console.error("Failed to save chats to localStorage", error);
+    // Set sidebar state based on screen size
+    const isMobile = window.innerWidth < 768;
+    setSidebarOpen(!isMobile);
+
+    // Fetch chats when user is available
+    if (user) {
+      fetchChats();
     }
-  }, [chats, activeChatId]);
+  }, [user, fetchChats]);
 
   const createNewChat = useCallback(() => {
     setActiveChatId(null);
@@ -90,13 +106,52 @@ const ChatPage = () => {
     textareaRef.current?.focus();
   }, []);
 
-  useEffect(() => {
-    const sortedChats = Object.values(chats).sort((a, b) => b.timestamp - a.timestamp);
-    // If there are no chats after loading, stay in the 'new chat' state (activeChatId is null).
-    if (!activeChatId && sortedChats.length > 0 && !localStorage.getItem('activeChatId')) {
-      setActiveChatId(sortedChats[0].id);
+  const selectChat = useCallback((chatId: string) => {
+    setActiveChatId(chatId);
+    setInput('');
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
     }
-  }, [activeChatId, chats]);
+    textareaRef.current?.focus();
+  }, []);
+
+  const deleteChat = useCallback(async (chatId: string) => {
+    if (!user) return; // User must be authenticated
+
+    try {
+      const response = await fetch(`/api/chat/${chatId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Firebase-UID': user.uid, // Pass UID for authorization if needed in API route
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete chat: ${response.status}`);
+      }
+      
+      // Remove the chat from local state
+      setChats(prev => {
+        const newChats = { ...prev };
+        delete newChats[chatId];
+        return newChats;
+      });
+
+      // If the deleted chat was the active one, select the most recent remaining chat or create a new one
+      if (activeChatId === chatId) {
+        const sortedRemainingChats = Object.values(chats).filter(c => c.id !== chatId).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        if (sortedRemainingChats.length > 0) {
+          setActiveChatId(sortedRemainingChats[0].id);
+        } else {
+          createNewChat();
+        }
+      }
+    } catch (error) {
+      console.error("Failed to delete chat:", error);
+      alert("Failed to delete chat. Please try again.");
+    }
+  }, [user, chats, activeChatId, createNewChat]);
 
   // --- UI & SCROLL LOGIC ---
   const scrollToBottom = () => {
@@ -124,29 +179,47 @@ const ChatPage = () => {
   }, [input]);
 
   const handleSendMessage = async () => {
+    if (!user) {
+      alert("Please log in to chat.");
+      return;
+    }
+
     const messageToSend = input.trim();
     if (messageToSend === '' || isLoading) return;
 
     let currentChatId = activeChatId;
-    const userMessage: Message = { id: uuidv4(), text: messageToSend, sender: 'user' };
-    
-    // If it's a new chat, create it first
+    const userMessage: Message = { id: uuidv4(), text: messageToSend, sender: 'user', timestamp: Date.now() };
+    let newChatTitle = '';
+
+    // If it's a new chat, prepare for creation on backend
     if (!currentChatId) {
-      const newChatId = uuidv4();
-      const newChat: ChatSession = {
-        id: newChatId,
-        title: messageToSend.substring(0, 30),
-        messages: [userMessage],
-        timestamp: Date.now(),
-      };
-      setChats(prev => ({ ...prev, [newChatId]: newChat }));
-      setActiveChatId(newChatId);
-      currentChatId = newChatId;
+      currentChatId = uuidv4(); // Generate a new frontend UUID for the chat
+      newChatTitle = messageToSend.substring(0, 30) + (messageToSend.length > 30 ? '...' : '');
+      setChats(prev => ({
+        ...prev,
+        [currentChatId!]: {
+          id: currentChatId!,
+          userId: user.uid,
+          title: newChatTitle,
+          messages: [userMessage],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+      }));
+      setActiveChatId(currentChatId);
     } else {
-      // It's an existing chat
-      const updatedMessages = [...(chats[currentChatId]?.messages ?? []), userMessage];
-      const updatedChat = { ...chats[currentChatId], messages: updatedMessages };
-      setChats(prev => ({ ...prev, [currentChatId!]: updatedChat }));
+      // It's an existing chat, update local state immediately for responsiveness
+      setChats(prev => {
+        const chat = prev[currentChatId!];
+        return {
+          ...prev,
+          [currentChatId!]: {
+            ...chat,
+            messages: [...chat.messages, userMessage],
+            updatedAt: new Date().toISOString(),
+          },
+        };
+      });
     }
     
     setInput('');
@@ -156,18 +229,25 @@ const ChatPage = () => {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          message: messageToSend, 
-          // Sending only previous messages for history context
-          history: chats[currentChatId]?.messages ?? [] 
+        body: JSON.stringify({
+          userId: user.uid, // Firebase UID
+          chatId: currentChatId,
+          title: newChatTitle, // Only relevant for new chats
+          message: userMessage, // Send the full message object
+          // For AI context, send relevant history, but not the full ChatSession object
+          history: activeMessages.map(msg => ({ sender: msg.sender, text: msg.text })) 
         }),
       });
 
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
 
       const data = await response.json();
-      const aiResponse: Message = { id: uuidv4(), text: data.reply, sender: 'ai' };
+      const aiResponse: Message = { id: uuidv4(), text: data.reply, sender: 'ai', timestamp: Date.now() };
       
+      // Update local state with AI response and backend's full chat object
       setChats(prev => {
         const chat = prev[currentChatId!];
         return {
@@ -175,13 +255,17 @@ const ChatPage = () => {
           [currentChatId!]: {
             ...chat,
             messages: [...chat.messages, aiResponse],
+            // Optionally, update chat title from backend if AI generated it
+            title: data.title || chat.title,
+            updatedAt: data.updatedAt || chat.updatedAt,
+            _id: data._id || chat._id, // Store backend's MongoDB _id
           },
         };
       });
 
     } catch (error) {
       console.error("Failed to send message:", error);
-      const errorResponse: Message = { id: uuidv4(), text: 'Sorry, I couldn\'t connect to the AI. Please try again.', sender: 'ai' };
+      const errorResponse: Message = { id: uuidv4(), text: 'Sorry, I couldn\'t connect to the AI. Please try again.', sender: 'ai', timestamp: Date.now() };
       setChats(prev => {
         const chat = prev[currentChatId!];
         return {
@@ -189,6 +273,7 @@ const ChatPage = () => {
           [currentChatId!]: {
             ...chat,
             messages: [...chat.messages, errorResponse],
+            updatedAt: new Date().toISOString(),
           },
         };
       });
@@ -197,7 +282,7 @@ const ChatPage = () => {
     }
   };
 
-  const sortedChats = Object.values(chats).sort((a, b) => b.timestamp - a.timestamp);
+  const sortedChats = Object.values(chats).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
   const Sidebar = () => (
     <aside className={`fixed top-0 left-0 z-30 h-full flex flex-col bg-card transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} w-72`}>
@@ -207,23 +292,60 @@ const ChatPage = () => {
             Predictive Health
           </span>
         </Link>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={createNewChat}
+          className="ml-2"
+          title="New Chat"
+        >
+          <Plus className="w-5 h-5" />
+        </Button>
       </div>
       <div className="flex-1 overflow-y-auto sidebar-scroll-container">
         <nav className="p-2 space-y-1">
           {sortedChats.map((chat) => (
-            <button
-              key={chat.id}
-              onClick={() => { setActiveChatId(chat.id); if (window.innerWidth < 768) setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm transition-colors relative ${
-                activeChatId === chat.id ? 'bg-muted text-foreground' : 'hover:bg-muted/50'
-              }`}
-            >
-              {activeChatId === chat.id && (
-                <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-[#a13de0] to-[#ff5177] rounded-r-full"></div>
-              )}
-              <MessageSquare className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate flex-1">{chat.title}</span>
-            </button>
+            <div key={chat.id} className="group relative">
+              <button
+                onClick={() => selectChat(chat.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm transition-colors relative ${
+                  activeChatId === chat.id ? 'bg-muted text-foreground' : 'hover:bg-muted/50'
+                }`}
+              >
+                {activeChatId === chat.id && (
+                  <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-[#a13de0] to-[#ff5177] rounded-r-full"></div>
+                )}
+                <MessageSquare className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate flex-1">{chat.title}</span>
+              </button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                    title="Delete Chat"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete your
+                      chat session and remove its data from our servers.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => deleteChat(chat.id)} className="bg-red-500 hover:bg-red-600">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           ))}
         </nav>
       </div>
@@ -248,122 +370,81 @@ const ChatPage = () => {
           {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       <Sidebar />
-      <div className={`flex flex-col flex-1 h-full transition-all duration-300 ease-in-out ${isSidebarOpen ? 'md:ml-72' : ''}`}>
-        {/* Header */}
-        <header className="flex items-center justify-end h-16 px-4 gap-2">
-          {activeChatId && (
-             <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="h-9 w-9 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
-                  aria-label="Delete Chat"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure you want to delete this chat?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete this chat from your history.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                     onClick={() => {
-                        if (!activeChatId) return;
-                        
-                        setChats(prev => {
-                          const newChats = { ...prev };
-                          delete newChats[activeChatId];
-                          // Also update localStorage right away
-                          localStorage.setItem('chatHistory', JSON.stringify(newChats));
-                          return newChats;
-                        });
-                        
-                        // If the deleted chat was the active one, reset to the new chat screen
-                        setActiveChatId(null);
-                        localStorage.removeItem('activeChatId');
-                     }}
-                     className={buttonVariants({ variant: "destructive" })}
-                  >
-                    Delete Chat
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+      <main className={`flex flex-col flex-1 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'ml-72' : 'ml-0'}`}>
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 pt-16">
+          {!activeChatId && !isLoading && Object.keys(chats).length === 0 && (
+            <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 dark:text-gray-400">
+              <Sparkles className="w-16 h-16 mb-4 text-gray-400" />
+              <h2 className="text-xl font-semibold mb-2">Start a new conversation</h2>
+              <p>Type your first message to begin chatting with the AI Health Assistant.</p>
+            </div>
           )}
-          <Button
-            size="icon"
-            onClick={createNewChat}
-            className="h-9 w-9 rounded-full bg-gradient-to-br from-[#a13de0] to-[#ff5177] text-white hover:scale-105 active:scale-95 transition-transform"
-          >
-             <span className="sr-only">New Chat</span>
-            <Plus className="w-5 h-5" />
-          </Button>
-        </header>
-        
-        {/* Main chat area */}
-        <main className="flex-1 overflow-y-auto pb-32">
-          <div className="max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-            {activeMessages.length === 0 && !isLoading ? (
-              <div className="text-center pt-16">
-                  <div className="inline-block p-4 bg-gradient-to-br from-[#a13de0]/10 to-[#ff5177]/10 rounded-full mb-4">
-                     <Sparkles className="w-10 h-10 text-transparent bg-clip-text bg-gradient-to-br from-[#a13de0] to-[#ff5177]" />
-                   </div>
-                  <h1 className="text-3xl font-bold mb-2">AI Health Assistant</h1>
-                  <p className="text-muted-foreground mb-8">How can I help you today?</p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {activeMessages.map((message) => (
-                  <div key={message.id} className={`flex items-start gap-4 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    {message.sender === 'ai' && <div className="w-10 h-10 rounded-full bg-[#a13de0]/20 flex items-center justify-center text-[#a13de0] shrink-0"><Bot className="w-6 h-6" /></div>}
-                    <div className={`max-w-[85%] p-4 rounded-xl shadow-sm ${message.sender === 'user' ? 'bg-gradient-to-br from-[#a13de0] to-[#ff5177] text-white rounded-br-none' : 'bg-card text-card-foreground rounded-bl-none'}`}>
-                      <div className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown></div>
+
+          {activeMessages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex items-start gap-4 ${
+                message.sender === 'user' ? 'justify-end' : 'justify-start'
+              }`}
+            >
+              {message.sender === 'ai' && (
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
+                  <Bot className="w-4 h-4" />
                 </div>
-                    {message.sender === 'user' && <div className="w-10 h-10 rounded-full bg-card flex items-center justify-center text-muted-foreground shrink-0"><User className="w-6 h-6" /></div>}
+              )}
+              <div
+                className={`max-w-xl p-3 rounded-lg ${
+                  message.sender === 'user'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                    : 'bg-secondary text-secondary-foreground'
+                }`}
+              >
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
+              </div>
+              {message.sender === 'user' && (
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-gray-800 dark:text-gray-200 text-xs font-bold">
+                  <User className="w-4 h-4" />
+                </div>
+              )}
             </div>
           ))}
+
           {isLoading && (
             <div className="flex items-start gap-4 justify-start">
-                    <div className="w-10 h-10 rounded-full bg-[#a13de0]/20 flex items-center justify-center text-[#a13de0] shrink-0"><Bot className="w-6 h-6" /></div>
-                    <div className="max-w-[85%] p-4 rounded-xl shadow-sm bg-card text-card-foreground rounded-bl-none flex items-center space-x-2"><Loader2 className="w-5 h-5 animate-spin" /><span className="text-sm text-muted-foreground">AI is thinking...</span></div>
-            </div>
-          )}
-           <div ref={messagesEndRef} />
-        </div>
-            )}
-          </div>
-        </main>
-
-        {/* Chat Input Footer */}
-        <footer className="w-full bg-background/80 backdrop-blur-md z-10">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="relative flex w-full items-end py-2">
-                <textarea
-                  ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                  placeholder="Type your health question..."
-                  className="w-full pl-4 pr-14 py-3 rounded-xl bg-muted/80 border-none shadow-sm focus:outline-none focus:ring-2 focus:ring-[#a13de0]/60 text-base resize-none leading-6"
-                  rows={1}
-                disabled={isLoading}
-              />
-              <div className="absolute right-2.5 bottom-2.5">
-                <Button onClick={() => handleSendMessage()} size="icon" className="h-9 w-9 p-0 rounded-full flex items-center justify-center bg-gradient-to-br from-[#a13de0] to-[#ff5177] text-white shadow-md hover:scale-105 active:scale-95 transition-transform" disabled={!input.trim() || isLoading}>
-                  <span className="sr-only">Send Message</span>
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4" />}
-                </Button>
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
+                <Bot className="w-4 h-4" />
+              </div>
+              <div className="max-w-xl p-3 rounded-lg bg-secondary text-secondary-foreground animate-pulse">
+                <Loader2 className="w-5 h-5 animate-spin" />
               </div>
             </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+        <div className="border-t border-border p-4 bg-background">
+          <div className="flex items-center space-x-2">
+            <textarea
+              ref={textareaRef}
+              className="flex-1 p-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none overflow-hidden"
+              placeholder="Type your message..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              rows={1}
+            />
+            <Button onClick={handleSendMessage} disabled={isLoading || input.trim() === ''}>
+              <Send className="w-5 h-5" />
+              <span className="sr-only">Send</span>
+            </Button>
           </div>
-        </footer>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

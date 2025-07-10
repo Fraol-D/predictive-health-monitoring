@@ -45,7 +45,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final Map<String, ChatSession> _chatSessions = {};
   String? _activeChatId;
-  
+
   bool _isLoading = false;
 
   @override
@@ -56,7 +56,12 @@ class _ChatScreenState extends State<ChatScreen> {
     _chatSessions[initialSessionId] = ChatSession(
       id: initialSessionId,
       title: 'Initial Chat',
-      messages: [ChatMessage(text: "Hello! I'm your AI Health Assistant. How can I help you today?", isUser: false)],
+      messages: [
+        ChatMessage(
+            text:
+                "Hello! I'm your AI Health Assistant. How can I help you today?",
+            isUser: false)
+      ],
       timestamp: DateTime.now(),
     );
     _activeChatId = initialSessionId;
@@ -73,7 +78,7 @@ class _ChatScreenState extends State<ChatScreen> {
       Navigator.of(context).pop();
     }
   }
-  
+
   void _deleteChat(String sessionId) {
     setState(() {
       _chatSessions.remove(sessionId);
@@ -93,7 +98,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _sendMessage() async {
     if (_controller.text.isEmpty || _isLoading) return;
-    
+
     final geminiService = Provider.of<GeminiService>(context, listen: false);
     final userMessageText = _controller.text;
     final userMessage = ChatMessage(text: userMessageText, isUser: true);
@@ -107,7 +112,8 @@ class _ChatScreenState extends State<ChatScreen> {
         final newChatId = uuid.v4();
         final newSession = ChatSession(
           id: newChatId,
-          title: userMessageText.substring(0, userMessageText.length > 30 ? 30 : userMessageText.length),
+          title: userMessageText.substring(
+              0, userMessageText.length > 30 ? 30 : userMessageText.length),
           messages: [userMessage],
           timestamp: DateTime.now(),
         );
@@ -127,8 +133,10 @@ class _ChatScreenState extends State<ChatScreen> {
         _chatSessions[_activeChatId!]?.messages.add(aiMessage);
       });
     } catch (e) {
-      final errorMessage = ChatMessage(text: 'Error: Could not get a response. ${e.toString()}', isUser: false);
-       setState(() {
+      final errorMessage = ChatMessage(
+          text: 'Error: Could not get a response. ${e.toString()}',
+          isUser: false);
+      setState(() {
         _chatSessions[_activeChatId!]?.messages.add(errorMessage);
       });
     } finally {
@@ -148,7 +156,8 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final activeMessages = _activeChatId != null ? _chatSessions[_activeChatId!]?.messages : [];
+    final activeMessages =
+        _activeChatId != null ? _chatSessions[_activeChatId!]?.messages : [];
 
     return Scaffold(
       key: _scaffoldKey,
@@ -165,11 +174,13 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           IconButton(
             icon: badges.Badge(
-              badgeContent: const Text('3', style: TextStyle(color: Colors.white, fontSize: 10)),
+              badgeContent: const Text('3',
+                  style: TextStyle(color: Colors.white, fontSize: 10)),
               child: const Icon(Icons.notifications_outlined),
             ),
             onPressed: () {
-               Navigator.of(context).push(MaterialPageRoute(builder: (context) => const NotificationsScreen()));
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const NotificationsScreen()));
             },
           ),
           IconButton(
@@ -245,7 +256,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 return ListTile(
                   title: Text(session.title, overflow: TextOverflow.ellipsis),
                   selected: _activeChatId == session.id,
-                  selectedTileColor: Theme.of(context).colorScheme.surfaceVariant,
+                  selectedTileColor:
+                      Theme.of(context).colorScheme.surfaceVariant,
                   onTap: () => _setActiveChat(session.id),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_outline),
@@ -270,7 +282,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                 child: Text(
                                   'Delete Chat',
                                   style: TextStyle(
-                                      color: Theme.of(context).colorScheme.error),
+                                      color:
+                                          Theme.of(context).colorScheme.error),
                                 ),
                               ),
                             ],
@@ -315,9 +328,7 @@ class _ChatScreenState extends State<ChatScreen> {
           data: message.text,
           styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
             p: theme.textTheme.bodyLarge?.copyWith(
-              color: isUser
-                  ? Colors.white
-                  : theme.colorScheme.onSurfaceVariant,
+              color: isUser ? Colors.white : theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -342,7 +353,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 filled: true,
                 fillColor: Theme.of(context).colorScheme.surface,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
               onSubmitted: (_) => _sendMessage(),
               minLines: 1,
@@ -352,7 +364,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           const SizedBox(width: 8.0),
           Container(
-             decoration: const BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: AppTheme.titleHeaderGradient,
               shape: BoxShape.circle,
             ),
@@ -366,12 +378,21 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
-  
+
   Widget _buildConversationStarters() {
     final List<Map<String, dynamic>> prompts = [
-      {'icon': Icons.restaurant_menu_outlined, 'text': 'Can you suggest a low-carb meal plan?'},
-      {'icon': Icons.analytics_outlined, 'text': 'Explain my latest health report'},
-      {'icon': Icons.fitness_center_outlined, 'text': 'What are some good at-home exercises?'},
+      {
+        'icon': Icons.restaurant_menu_outlined,
+        'text': 'Can you suggest a low-carb meal plan?'
+      },
+      {
+        'icon': Icons.analytics_outlined,
+        'text': 'Explain my latest health report'
+      },
+      {
+        'icon': Icons.fitness_center_outlined,
+        'text': 'What are some good at-home exercises?'
+      },
       {'icon': Icons.help_outline, 'text': 'What does my risk score mean?'},
     ];
 
@@ -383,7 +404,10 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             Text(
               "What can I help with?",
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 32),
             Wrap(
@@ -396,7 +420,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   label: Text(prompt['text']),
                   onPressed: () => _sendStarterPrompt(prompt['text']),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 16, horizontal: 20),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -413,4 +438,4 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
-} 
+}

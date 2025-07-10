@@ -9,6 +9,8 @@ import { LifestyleForm } from '@/components/assessment/lifestyle-form';
 import { MedicalHistoryForm } from '@/components/assessment/medical-history-form';
 import { VitalSignsForm } from '@/components/assessment/vital-signs-form';
 import { AssessmentData, AssessmentStep } from '@shared/types/assessment';
+import { useAuth } from '../../providers/auth-provider'; // Import useAuth
+import { v4 as uuidv4 } from 'uuid'; // Import uuid
 
 // Define types for form data and API results
 interface RiskInfo {
@@ -41,7 +43,7 @@ const stepVariants = {
 };
 
 const initialAssessmentData: AssessmentData = {
-  id: '',
+  id: uuidv4(), // Generate a unique ID for the assessment
   userId: '', // This will be set when the user is authenticated
   timestamp: new Date().toISOString(),
   diet: {
@@ -131,6 +133,17 @@ const AssessmentPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RiskResult | null>(null);
+  const { user } = useAuth(); // Get the current authenticated user
+
+  // Ensure userId is set once the user is available
+  React.useEffect(() => {
+    if (user && !assessmentData.userId) {
+      setAssessmentData(prev => ({
+        ...prev,
+        userId: user.uid, // Use Firebase UID as the userId for now, will map to MongoDB _id in API route
+      }));
+    }
+  }, [user, assessmentData.userId]);
 
   const handleDataChange = (stepId: string, data: Partial<AssessmentData[keyof AssessmentData]>) => {
     setAssessmentData(prev => ({
@@ -165,12 +178,19 @@ const AssessmentPage = () => {
   };
 
   const handleAssessmentComplete = async () => {
+    if (!user) {
+      setError('User not authenticated. Please log in to complete the assessment.');
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
     setResult(null);
 
     const finalData = {
       ...assessmentData,
+      userId: user.uid, // Ensure the latest Firebase UID is used
+      assessmentId: assessmentData.id, // Use the generated UUID as assessmentId
       status: 'completed' as const,
       timestamp: new Date().toISOString(),
     };

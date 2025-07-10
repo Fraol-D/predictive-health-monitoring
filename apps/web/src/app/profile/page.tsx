@@ -56,13 +56,13 @@ const ProfileFormCard = memo(({ profile, user, onProfileUpdate }: { profile: Use
     };
 
     try {
-      const url = profile
+      const url = profile 
         ? `http://localhost:3001/api/users/${profile._id}`
         : 'http://localhost:3001/api/users';
 
       const method = profile ? 'PATCH' : 'POST';
 
-      const body = profile
+      const body = profile 
         ? JSON.stringify(updatedData)
         : JSON.stringify({ ...updatedData, firebaseUID: user.uid, email: user.email });
 
@@ -86,48 +86,48 @@ const ProfileFormCard = memo(({ profile, user, onProfileUpdate }: { profile: Use
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className='text-2xl'>
-            {isEditing ? 'Edit Profile' : 'Your Information'}
-          </CardTitle>
-          {!isEditing && profile && (
-            <Button variant="outline" onClick={() => setIsEditing(true)}>Edit</Button>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isEditing ? (
-          <form onSubmit={handleSaveProfile} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" name="name" defaultValue={profile?.name || user.displayName || ''} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={user.email || ''} disabled />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="age">Age</Label>
-                <Input id="age" name="age" type="number" defaultValue={profile?.age} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="gender">Gender</Label>
-                <Input id="gender" name="gender" defaultValue={profile?.gender} />
-              </div>
-            </div>
+                <Card>
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle className='text-2xl'>
+                          {isEditing ? 'Edit Profile' : 'Your Information'}
+                        </CardTitle>
+                        {!isEditing && profile && (
+                          <Button variant="outline" onClick={() => setIsEditing(true)}>Edit</Button>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {isEditing ? (
+                        <form onSubmit={handleSaveProfile} className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                              <Label htmlFor="name">Name</Label>
+                              <Input id="name" name="name" defaultValue={profile?.name || user.displayName || ''} required />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="email">Email</Label>
+                              <Input id="email" type="email" value={user.email || ''} disabled />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="age">Age</Label>
+                              <Input id="age" name="age" type="number" defaultValue={profile?.age} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="gender">Gender</Label>
+                              <Input id="gender" name="gender" defaultValue={profile?.gender} />
+                            </div>
+                          </div>
             <div className="flex justify-end gap-2 mt-4">
-              {profile && <Button type="button" variant="ghost" onClick={() => setIsEditing(false)}>Cancel</Button>}
-              <Button type="submit" className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white">
-                Save Profile
-              </Button>
-            </div>
-          </form>
-        ) : (
-          <div className="space-y-4">
-            <div>
+                            {profile && <Button type="button" variant="ghost" onClick={() => setIsEditing(false)}>Cancel</Button>}
+                            <Button type="submit" className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white">
+                              Save Profile
+                            </Button>
+                          </div>
+                        </form>
+                      ) : (
+                        <div className="space-y-4">
+                            <div>
               <Label className="text-sm font-medium text-muted-foreground">Name</Label>
               <p>{profile?.name}</p>
             </div>
@@ -138,19 +138,19 @@ const ProfileFormCard = memo(({ profile, user, onProfileUpdate }: { profile: Use
             <div>
               <Label className="text-sm font-medium text-muted-foreground">Gender</Label>
               <p>{profile?.gender || 'Not set'}</p>
-            </div>
-            <div>
+                            </div>
+                             <div>
               <Label className="text-sm font-medium text-muted-foreground">Email</Label>
               <p>{profile?.email}</p>
-            </div>
-            <div>
+                            </div>
+                            <div>
               <Label className="text-sm font-medium text-muted-foreground">Joined On</Label>
               <p>{profile ? new Date(profile.createdAt).toLocaleDateString() : 'N/A'}</p>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                            </div>
+                        </div>
+                      )}
+                    </CardContent>
+                </Card>
   );
 });
 ProfileFormCard.displayName = 'ProfileFormCard';
@@ -160,21 +160,21 @@ ProfileFormCard.displayName = 'ProfileFormCard';
 // ============================================================================
 const SettingsCard = memo(() => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className='text-2xl'>App Settings</CardTitle>
-      </CardHeader>
-      <CardContent className='space-y-6'>
-        <div className='flex items-center justify-between'>
-          <div className="flex items-center">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className='text-2xl'>App Settings</CardTitle>
+                    </CardHeader>
+                    <CardContent className='space-y-6'>
+                       <div className='flex items-center justify-between'>
+                           <div className="flex items-center">
             <Palette className="w-5 h-5 mr-4 text-muted-foreground" />
-            <div>
-              <h3 className='text-lg font-medium'>Theme</h3>
+                               <div>
+                                   <h3 className='text-lg font-medium'>Theme</h3>
               <p className='text-sm text-muted-foreground'>Switch between light and dark mode.</p>
-            </div>
-          </div>
-          <ThemeToggleButton />
-        </div>
+                               </div>
+                           </div>
+                           <ThemeToggleButton />
+                       </div>
       </CardContent>
     </Card>
   );
@@ -275,14 +275,14 @@ export default function ProfilePage() {
                 <LogOut className="w-5 h-5 mr-4 text-destructive" />
                 <span className="text-destructive">Log Out</span>
               </button>
-            </CardContent>
-          </Card>
-        </div>
+                    </CardContent>
+                </Card>
+            </div>
         <div className="lg:col-span-2 space-y-8">
           <ProfileFormCard profile={profile} user={user} onProfileUpdate={setProfile} />
           <SettingsCard />
+            </div>
         </div>
-      </div>
     </PageLayout>
   );
-}
+} 
