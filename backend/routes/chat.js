@@ -36,16 +36,14 @@ router.post("/", async (req, res) => {
   const { userId, chatId, title, message } = req.body;
 
   if (!userId || !chatId || !message) {
-    return res
-      .status(400)
-      .json({
-        message: "Missing required chat data (userId, chatId, message).",
-        received: {
-          userId,
-          chatId,
-          message: message ? "[present]" : "[missing]",
-        },
-      });
+    return res.status(400).json({
+      message: "Missing required chat data (userId, chatId, message).",
+      received: {
+        userId,
+        chatId,
+        message: message ? "[present]" : "[missing]",
+      },
+    });
   }
   if (!mongoose.Types.ObjectId.isValid(userId)) {
     return res.status(400).json({ message: "Invalid userId format." });
@@ -73,12 +71,10 @@ router.post("/", async (req, res) => {
   } catch (err) {
     if (err.code === 11000) {
       // Duplicate key error
-      return res
-        .status(409)
-        .json({
-          message: "Chat with this ID already exists for this user.",
-          details: err.message,
-        });
+      return res.status(409).json({
+        message: "Chat with this ID already exists for this user.",
+        details: err.message,
+      });
     }
     console.error("Error in chat POST route:", err);
     res.status(400).json({ message: err.message });
@@ -86,17 +82,17 @@ router.post("/", async (req, res) => {
 });
 
 // DELETE a chat session by chatId
-router.delete('/:chatId', async (req, res) => {
-    try {
-        const chat = await Chat.findOneAndDelete({ chatId: req.params.chatId });
-        if (chat == null) {
-            return res.status(404).json({ message: 'Cannot find chat to delete.' });
-        }
-        res.json({ message: 'Chat deleted successfully.' });
-    } catch (err) {
-        console.error('Error in chat DELETE route:', err);
-        res.status(500).json({ message: err.message });
+router.delete("/:chatId", async (req, res) => {
+  try {
+    const chat = await Chat.findOneAndDelete({ chatId: req.params.chatId });
+    if (chat == null) {
+      return res.status(404).json({ message: "Cannot find chat to delete." });
     }
+    res.json({ message: "Chat deleted successfully." });
+  } catch (err) {
+    console.error("Error in chat DELETE route:", err);
+    res.status(500).json({ message: err.message });
+  }
 });
 
 module.exports = router;

@@ -1,133 +1,124 @@
 import { NextResponse } from 'next/server';
+import { getOrCreateMongoUserId } from '@/lib/auth-service';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyCDxRePxoKeOgODUwd3OMWyK0tv2Tx4Oj8';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
-
 const BACKEND_API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'http://localhost:3001/api';
+
+// Helper function to parse potentially malformed JSON from Gemini response
+function parseGeminiJson(jsonString: string): any {
+  try {
+    // Remove markdown backticks and 'json' language identifier
+    const cleanedString = jsonString.replace(/```json/g, '').replace(/```/g, '').trim();
+    return JSON.parse(cleanedString);
+  } catch (e) {
+    console.error("Failed to parse Gemini JSON response:", e);
+    console.error("Original string:", jsonString);
+    return null; // Or handle error as needed
+  }
+}
 
 export async function POST(request: Request) {
   try {
-    const { userId: firebaseUID, assessmentId, ...fullAssessmentData } = await request.json();
+    const { firebaseUID, ...assessmentData } = await request.json();
 
-    if (!firebaseUID || !assessmentId || !fullAssessmentData) {
-      return NextResponse.json({ error: 'Missing firebaseUID, assessmentId, or full assessment data.' }, { status: 400 });
+    if (!firebaseUID) {
+      return NextResponse.json({ error: 'Missing firebaseUID' }, { status: 400 });
     }
-
-    // 1. Ensure user exists in our MongoDB and get their MongoDB _id
-    let mongoUserId;
-    try {
-      let userResponse = await fetch(`${BACKEND_API_BASE_URL}/users/firebase/${firebaseUID}`);
-      let userData = await userResponse.json();
-
-      if (userResponse.status === 404) {
-        // User not found in MongoDB, create them
-        const newUserResponse = await fetch(`${BACKEND_API_BASE_URL}/users`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ firebaseUID, name: 'New User', email: `${firebaseUID}@example.com` }), // Placeholder name/email
-        });
-        if (!newUserResponse.ok) {
-          const errorBody = await newUserResponse.text();
-          throw new Error(`Failed to create user in backend: ${newUserResponse.status} ${errorBody}`);
-        }
-        const newUserData = await newUserResponse.json();
-        mongoUserId = newUserData._id;
-      } else if (userResponse.ok) {
-        mongoUserId = userData._id;
-      } else {
-        const errorBody = await userResponse.text();
-        throw new Error(`Failed to fetch user from backend: ${userResponse.status} ${errorBody}`);
-      }
-    } catch (e) {
-      console.error('Error ensuring user in backend:', e);
-      return NextResponse.json({ error: `Backend user synchronization failed: ${e instanceof Error ? e.message : String(e)}` }, { status: 500 });
-    }
-
     if (!GEMINI_API_KEY) {
-      console.error('Gemini API key is not configured.');
-      return NextResponse.json({ error: 'API key not configured. Please set GEMINI_API_KEY environment variable.' }, { status: 500 });
-    }
-    
-    const prompt = `
-      Analyze the following user health data and provide a risk assessment.
-      User Data: ${JSON.stringify(fullAssessmentData, null, 2)}
-
-      Based on this data, return a JSON object with three main keys: "diabetes", "hypertension", and "heartDisease".
-      Each key should correspond to an object with the following structure:
-      - "score": A numerical risk score between 0 and 100.
-      - "level": A risk level string, which must be one of "Low", "Medium", "High", or "Very High".
-      - "description": A brief, one-sentence explanation for the assessment.
-
-      Do not include any text, notes, or explanations outside of the main JSON object.
-    `;
-
-    const requestBody = {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        temperature: 0.3,
-      },
-       safetySettings: [
-        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      ],
-    };
-
-    const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!geminiResponse.ok) {
-      const errorBody = await geminiResponse.text();
-      console.error('Gemini API request failed:', geminiResponse.status, errorBody);
-      return NextResponse.json({ error: `Gemini API Error: ${geminiResponse.status} ${errorBody}` }, { status: geminiResponse.status });
+        console.error('GEMINI_API_KEY not configured.');
+        return NextResponse.json({ error: 'API key not configured.' }, { status: 500 });
     }
 
-    const responseData = await geminiResponse.json();
-    
-    const textOutput = responseData?.candidates?.[0]?.content?.parts?.[0]?.text;
-    let riskScores;
-    if (textOutput) {
-      try {
-        riskScores = JSON.parse(textOutput);
-      } catch (parseError) {
-        console.error('Failed to parse Gemini response text as JSON:', textOutput, parseError);
-        return NextResponse.json({ error: 'Gemini API returned malformed JSON.', details: textOutput }, { status: 500 });
-      }
-    } else {
-      console.error('Unexpected Gemini API response structure:', responseData);
-      return NextResponse.json({ error: 'Unexpected response structure from Gemini API.' }, { status: 500 });
-    }
+    const mongoUserId = await getOrCreateMongoUserId(firebaseUID);
 
-    // 2. Save full assessment data and Gemini response to our Node.js backend
-    const backendAssessmentResponse = await fetch(`${BACKEND_API_BASE_URL}/assessments`, {
+    // 1. Save the initial assessment to get an ID
+    const initialAssessmentResponse = await fetch(`${BACKEND_API_BASE_URL}/assessments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: mongoUserId,
-        assessmentId: assessmentId,
-        fullAssessmentData: fullAssessmentData, // Pass the entire assessment data object
-        riskScores: riskScores,
-      }),
+      body: JSON.stringify({ userId: mongoUserId, ...assessmentData }),
     });
 
-    if (!backendAssessmentResponse.ok) {
-      const errorBody = await backendAssessmentResponse.text();
-      console.error('Backend assessment save failed:', backendAssessmentResponse.status, errorBody);
-      throw new Error(`Failed to save assessment to backend: ${backendAssessmentResponse.status} ${errorBody}`);
+    if (!initialAssessmentResponse.ok) {
+        const errorBody = await initialAssessmentResponse.text();
+        return NextResponse.json({ error: 'Failed to save initial assessment', details: errorBody }, { status: 500 });
+    }
+    const savedAssessment = await initialAssessmentResponse.json();
+    const assessmentId = savedAssessment._id;
+
+    // 2. Format data for Gemini prompt for structured JSON output
+    const prompt = `
+      Based on the following health assessment data, please generate a detailed health report.
+      The output MUST be a single, valid JSON object. Do not include any text or markdown formatting before or after the JSON object.
+      The JSON object should have two top-level keys: "reportSummary" and "recommendations".
+      
+      - "reportSummary": A string containing a comprehensive, yet easy-to-understand summary of the health status, key risks, and overall wellness based on the data.
+      - "recommendations": An array of objects. Each object should have two keys:
+        - "category": A string from one of the following categories: "Diet", "Lifestyle", "Medical", "Fitness".
+        - "recommendation": A string containing a specific, actionable recommendation.
+
+      Here is the assessment data:
+      ${JSON.stringify(assessmentData, null, 2)}
+    `;
+
+    // 3. Call Gemini API
+    const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { response_mime_type: "application/json" },
+        }),
+    });
+    
+    if (!geminiResponse.ok) {
+        const errorBody = await geminiResponse.text();
+        console.error('Gemini API Error:', errorBody);
+        // Even if Gemini fails, we have the base assessment saved.
+        // We can return the saved assessment and log the AI error.
+        return NextResponse.json(savedAssessment);
     }
     
-    const savedAssessment = await backendAssessmentResponse.json();
-    console.log('Assessment saved to backend:', savedAssessment);
+    const responseData = await geminiResponse.json();
+    const geminiOutputText = responseData?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    // Return the Gemini result to the frontend as originally intended
-    return NextResponse.json(riskScores);
+    if (!geminiOutputText) {
+        console.error('Gemini response was empty.');
+        return NextResponse.json(savedAssessment);
+    }
+    
+    const structuredResponse = parseGeminiJson(geminiOutputText);
+
+    if (structuredResponse && structuredResponse.reportSummary && structuredResponse.recommendations) {
+        // 4. Update the assessment with the report summary
+        await fetch(`${BACKEND_API_BASE_URL}/assessments/${assessmentId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reportSummary: structuredResponse.reportSummary }),
+        });
+
+        // 5. Save each recommendation
+        for (const rec of structuredResponse.recommendations) {
+            await fetch(`${BACKEND_API_BASE_URL}/recommendations`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: mongoUserId,
+                    assessmentId: assessmentId,
+                    category: rec.category,
+                    recommendation: rec.recommendation, // The 'recommendation' field from the AI
+                }),
+            });
+        }
+    } else {
+        console.error("Parsed Gemini response did not have the expected structure.", structuredResponse);
+    }
+
+    // 6. Fetch the fully updated assessment to return to the frontend
+    const finalAssessmentResponse = await fetch(`${BACKEND_API_BASE_URL}/reports/${assessmentId}`);
+    const finalAssessment = await finalAssessmentResponse.json();
+    
+    return NextResponse.json(finalAssessment);
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';

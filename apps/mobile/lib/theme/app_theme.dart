@@ -82,11 +82,9 @@ class AppTheme {
               primary: primaryColor,
               secondary: accentColor,
               surface: cardColor,
-              background: backgroundColor,
               onPrimary: onPrimaryColor,
               onSecondary: onAccentColor,
               onSurface: foregroundColor,
-              onBackground: foregroundColor,
               error: const Color(0xFFF87171), // Red 400
               onError: darkBackground,
               outline: borderColor,
@@ -95,11 +93,9 @@ class AppTheme {
               primary: primaryColor,
               secondary: accentColor,
               surface: cardColor,
-              background: backgroundColor,
               onPrimary: onPrimaryColor,
               onSecondary: onAccentColor,
               onSurface: foregroundColor,
-              onBackground: foregroundColor,
               error: const Color(0xFFDC2626), // Red 600
               onError: lightCard,
               outline: borderColor,

@@ -6,7 +6,7 @@ import 'package:predictive_health_monitoring/screens/login_screen.dart';
 import 'package:predictive_health_monitoring/services/auth_service.dart';
 
 class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({Key? key}) : super(key: key);
+  const AuthWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {

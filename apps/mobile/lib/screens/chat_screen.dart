@@ -257,7 +257,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   title: Text(session.title, overflow: TextOverflow.ellipsis),
                   selected: _activeChatId == session.id,
                   selectedTileColor:
-                      Theme.of(context).colorScheme.surfaceVariant,
+                      Theme.of(context).colorScheme.surfaceContainerHighest,
                   onTap: () => _setActiveChat(session.id),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_outline),
@@ -316,7 +316,7 @@ class _ChatScreenState extends State<ChatScreen> {
         padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 14.0),
         decoration: BoxDecoration(
           gradient: isUser ? AppTheme.titleHeaderGradient : null,
-          color: !isUser ? theme.colorScheme.surfaceVariant : null,
+          color: !isUser ? theme.colorScheme.surfaceContainerHighest : null,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -410,28 +410,31 @@ class _ChatScreenState extends State<ChatScreen> {
                   ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 32),
-            Wrap(
-              spacing: 12.0,
-              runSpacing: 12.0,
-              alignment: WrapAlignment.center,
-              children: prompts.map((prompt) {
-                return ElevatedButton.icon(
-                  icon: Icon(prompt['icon'], size: 20),
-                  label: Text(prompt['text']),
-                  onPressed: () => _sendStarterPrompt(prompt['text']),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 16, horizontal: 20),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: prompts.map((prompt) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: ElevatedButton.icon(
+                      icon: Icon(prompt['icon'], size: 20),
+                      label: Text(prompt['text']),
+                      onPressed: () => _sendStarterPrompt(prompt['text']),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 16, horizontal: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        // Applying gradient requires a custom button or a workaround
+                        // For now, let's use primary color, can be enhanced later.
+                        // foregroundColor: Colors.white,
+                        // backgroundColor: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
-                    // Applying gradient requires a custom button or a workaround
-                    // For now, let's use primary color, can be enhanced later.
-                    // foregroundColor: Colors.white,
-                    // backgroundColor: Theme.of(context).colorScheme.primary,
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
           ],
         ),
