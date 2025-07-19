@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.5rem; /* Default border radius */
+
+    /* Light Theme Variables - Official Palette */
+    --background: 248 250 252;   /* almost white, light cool gray */
+    --foreground: 15 23 42;     /* slate-900 */
+    --card: 255 255 255;       /* Pure White */
+    --primary: 168 85 247;      /* purple-500 */
+    --accent: 236 72 153;     /* pink-500 */
+    
+    --primary-foreground: 255 255 255; 
+    --secondary: 241 245 249; /* slate-100 */
+    --secondary-foreground: 15 23 42; /* slate-900 */
+    --destructive: 220 38 38; /* red-600 */
+    --destructive-foreground: 248 250 252; 
+    --border: 226 232 240; /* slate-200 */
+    --input: 226 232 240; /* slate-200 */
+    --ring: 168 85 247; /* purple-500 */
+    --muted: 241 245 249; /* slate-100 */
+    --muted-foreground: 100 116 139; /* slate-500 */
+    --accent-foreground: 255 255 255;
+    --popover: 255 255 255;
+    --popover-foreground: 15 23 42;
+    --card-foreground: 15 23 42;
+  }
+
+  .dark {
+    /* Dark Theme Variables - Official Palette */
+    --background: 15 23 42;      /* slate-900 */
+    --foreground: 226 232 240;    /* slate-200 */
+    --card: 30 41 59;          /* slate-800 */
+    --primary: 192 132 252;       /* purple-400 */
+    --accent: 249 115 222;      /* pink-400 */
+
+    --primary-foreground: 15 23 42; /* slate-900 */
+    --secondary: 51 65 85; /* slate-700 */
+    --secondary-foreground: 226 232 240; /* slate-200 */
+    --destructive: 185 28 28; /* red-700 */
+    --destructive-foreground: 226 232 240; /* slate-200 */
+    --border: 51 65 85; /* slate-700 */
+    --input: 51 65 85; /* slate-700 */
+    --ring: 192 132 252; /* purple-400 */
+    --muted: 51 65 85; /* slate-700 */
+    --muted-foreground: 148 163 184; /* slate-400 */
+    --accent-foreground: 15 23 42; 
+    --popover: 30 41 59; /* slate-800 */
+    --popover-foreground: 226 232 240; /* slate-200 */
+    --card-foreground: 226 232 240; /* slate-200 */
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom Scrollbar for Webkit browsers */
+.sidebar-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #a13de0, #ff5177);
+  border-radius: 10px;
+}
+
+.sidebar-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #8a2fbd, #e63961);
+}
