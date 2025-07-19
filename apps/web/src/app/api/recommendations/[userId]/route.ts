@@ -58,7 +58,7 @@ export async function GET(
     const recommendations = await response.json();
 
     // The backend already returns a direct array of recommendations, so just pass it through
-    return NextResponse.json({ data: recommendations });
+    return NextResponse.json(recommendations);
   } catch (error) {
     console.error('Error fetching recommendations:', error);
     return NextResponse.json(

@@ -20,21 +20,23 @@ mongoose
   .catch((err) => console.error("❌ MongoDB connection error:", err.message));
 
 // API Routes
-const usersRouter = require('./routes/users');
-const assessmentsRouter = require('./routes/assessments');
-const chatRouter = require('./routes/chat');
-const recommendationsRouter = require('./routes/recommendations');
-const sharingRouter = require('./routes/sharing');
-const notificationsRouter = require('./routes/notifications');
-const reportsRouter = require('./routes/reports');
+const usersRouter = require("./routes/users");
+const assessmentsRouter = require("./routes/assessments");
+const chatRouter = require("./routes/chat");
+const recommendationsRouter = require("./routes/recommendations");
+const sharingRouter = require("./routes/sharing");
+const notificationsRouter = require("./routes/notifications");
+const reportsRouter = require("./routes/reports");
+const insightsRouter = require("./routes/insights");
 
-app.use('/api/users', usersRouter);
-app.use('/api/assessments', assessmentsRouter);
-app.use('/api/chat', chatRouter);
-app.use('/api/recommendations', recommendationsRouter);
-app.use('/api/sharing', sharingRouter);
-app.use('/api/notifications', notificationsRouter);
-app.use('/api/reports', reportsRouter);
+app.use("/api/users", usersRouter);
+app.use("/api/assessments", assessmentsRouter);
+app.use("/api/chat", chatRouter);
+app.use("/api/recommendations", recommendationsRouter);
+app.use("/api/sharing", sharingRouter);
+app.use("/api/notifications", notificationsRouter);
+app.use("/api/reports", reportsRouter);
+app.use("/api/insights", insightsRouter);
 
 // Simple route for testing
 app.get("/", (req, res) => {

@@ -13,7 +13,7 @@ export async function GET(
       return NextResponse.json({ error: 'Missing assessmentId.' }, { status: 400 });
     }
 
-    const backendRes = await fetch(`${BACKEND_BASE_URL}/api/reports/${assessmentId}`, {
+    const backendRes = await fetch(`${BACKEND_BASE_URL}/api/assessments/byAssessmentId/${assessmentId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

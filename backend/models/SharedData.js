@@ -8,7 +8,8 @@ const SharedDataSchema = new Schema(
       ref: "User",
       required: true,
     },
-    sharedDataId: { // Unique ID for shared data, can be a UUID from frontend
+    sharedDataId: {
+      // Unique ID for shared data, can be a UUID from frontend
       type: String,
       required: true,
       unique: true,

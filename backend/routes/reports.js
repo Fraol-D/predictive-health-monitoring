@@ -1,30 +1,29 @@
 const express = require("express");
 const router = express.Router();
-const Assessment = require("../models/Assessment");
+const Report = require("../models/Report"); // Changed from Assessment to Report
 const mongoose = require("mongoose");
 
-// GET a single assessment to be used as a "report"
+// GET a single generated report by assessmentId
 router.get("/:assessmentId", async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.assessmentId)) {
       return res.status(400).json({ message: "Invalid Assessment ID format." });
     }
 
-    const assessment = await Assessment.findById(
-      req.params.assessmentId
-    ).populate("userId", "name email"); // Populate user details
+    const report = await Report.findOne({
+      assessmentId: req.params.assessmentId,
+    }).populate("userId", "name email"); // Populate user details
 
-    if (assessment == null) {
+    if (report == null) {
       return res
         .status(404)
-        .json({ message: "Cannot find assessment report." });
+        .json({ message: "Report not found for this assessment." });
     }
 
-    // Return the full assessment object, the frontend will format it as a report
-    res.json(assessment);
+    res.json(report);
   } catch (err) {
     console.error(
-      `Error fetching assessment report ${req.params.assessmentId}:`,
+      `Error fetching report for assessment ${req.params.assessmentId}:`,
       err
     );
     res.status(500).json({ message: err.message });

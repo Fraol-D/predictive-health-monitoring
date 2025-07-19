@@ -1,7 +1,29 @@
 const express = require("express");
 const router = express.Router();
 const Assessment = require("../models/Assessment");
+const User = require("../models/User"); // Import User model
 const mongoose = require("mongoose");
+
+// GET all assessments for a user BY FIREBASE UID
+router.get("/firebase/:firebaseUID", async (req, res) => {
+  try {
+    const user = await User.findOne({ firebaseUID: req.params.firebaseUID });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(user._id)) {
+      return res.status(400).json({ message: "Invalid User ID format." });
+    }
+
+    const assessments = await Assessment.find({ userId: user._id }).sort({
+      date: -1,
+    });
+    res.json(assessments);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 // GET all assessments for a user
 router.get("/user/:userId", async (req, res) => {
@@ -89,12 +111,10 @@ router.post("/", async (req, res) => {
     // Handle validation errors or duplicate key errors (for assessmentId uniqueness)
     if (err.code === 11000) {
       // Duplicate key error
-      return res
-        .status(409)
-        .json({
-          message: "Assessment with this ID already exists.",
-          details: err.message,
-        });
+      return res.status(409).json({
+        message: "Assessment with this ID already exists.",
+        details: err.message,
+      });
     }
     res.status(400).json({ message: err.message });
   }

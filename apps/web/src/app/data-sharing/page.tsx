@@ -50,7 +50,7 @@ const DataSharingPage = () => {
       }
       try {
         // Fetch available assessments
-        const assessmentsResponse = await fetch(`/api/assessment/user/${user.uid}`);
+        const assessmentsResponse = await fetch(`/api/assessments/firebase/${user.uid}`);
         if (!assessmentsResponse.ok) {
           throw new Error(`Failed to fetch assessments: ${assessmentsResponse.status}`);
         }
@@ -131,7 +131,7 @@ const DataSharingPage = () => {
       setError(`Failed to share data: ${errorMessage}`);
       console.error("Error sharing data:", e);
     } finally {
-      setIsSharing(false);
+    setIsSharing(false);
     }
   };
 

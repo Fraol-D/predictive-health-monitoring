@@ -1,42 +1,47 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { notFound } from 'next/navigation';
+import React, { useState, useEffect, useCallback } from 'react';
+import { notFound, useRouter } from 'next/navigation';
 import PageLayout from '@/components/layout/page-layout';
-import { Heart, Droplet, Zap, CheckCircle } from 'lucide-react';
-import { useAuth } from '../../../providers/auth-provider'; // Adjust import path
-import Link from 'next/link'; // Added missing import
+import { Heart, Droplet, Zap, CheckCircle, Loader2, AlertTriangle, Activity, Brain } from 'lucide-react';
+import { useAuth } from '../../../providers/auth-provider';
+import Link from 'next/link';
+import toast from 'react-hot-toast';
 
-interface RiskInfoDetail {
+interface Scorecard {
+  category: string;
   score: number;
-  level: 'Low' | 'Medium' | 'High' | 'Very High';
-  description: string;
+  riskLevel: 'Low' | 'Medium' | 'High' | 'Very High';
+  details: string;
 }
 
 interface ReportData {
-  databaseId: string;
+  _id: string;
   assessmentId: string;
-  userId: string;
-  firebaseUID: string;
-  userName: string;
-  userEmail: string;
-  date: string; // ISO date string
-  fullAssessmentData: any; // Use a more specific type if known
-  riskScores: {
-    diabetes: RiskInfoDetail;
-    hypertension: RiskInfoDetail;
-    heartDisease: RiskInfoDetail;
+  userId: {
+    name: string;
+    email: string;
   };
-  recommendations: Array<{
-    id: string;
-    recommendationId: string;
-    category: string;
-    advice: string;
-    generatedAt: string;
-  }>;
+  reportData: {
+    riskSummary: string;
+    scorecards: Scorecard[];
+  };
+  generatedAt: string;
 }
 
-const RiskScoreCard = ({ icon, title, score, level, description }: { icon: React.ReactNode, title: string, score: number, level: string, description: string }) => {
+const RiskScoreCard = ({ 
+  icon, 
+  title, 
+  score, 
+  level, 
+  description 
+}: { 
+  icon: React.ReactNode;
+  title: string;
+  score: number;
+  level: string;
+  description: string;
+}) => {
     const getRiskStyling = (level: string) => {
         switch (level) {
             case 'High':
@@ -67,102 +72,137 @@ const RiskScoreCard = ({ icon, title, score, level, description }: { icon: React
     const { bg, text, border, shadow } = getRiskStyling(level);
 
     return (
-        <div className={`bg-card/70 backdrop-blur-md p-6 rounded-xl shadow-lg transition-all duration-300 border ${border} ${shadow}`}>
+        <div className={`bg-card/70 backdrop-blur-md p-6 rounded-xl shadow-lg transition-all duration-300 border ${border} ${shadow} hover:scale-105`}>
             <div className="flex items-center mb-4">
                 <div className={`p-2 rounded-full mr-4 ${bg} ${text}`}>{icon}</div>
                 <h3 className={`text-xl font-semibold ${text}`}>{title}</h3>
             </div>
             <div className="text-center my-4">
-                <p className={`text-6xl font-bold ${text}`}>{score}%</p>
+                <p className={`text-6xl font-bold ${text}`}>{score}</p>
                 <p className={`text-lg font-semibold mt-2 ${text}`}>{level} Risk</p>
             </div>
-            <p className="text-muted-foreground text-center">{description}</p>
+            <p className="text-muted-foreground text-center text-sm leading-relaxed">{description}</p>
         </div>
     );
 };
 
-const RecommendationItem = ({ title, description, category }: { title: string, description: string, category: string }) => {
-    // The backend Recommendation schema doesn't have a priority field directly.
-    // If a priority is needed for display, it would need to be derived or added to the backend schema.
-    // For now, assume a default or remove priority styling.
-    const displayPriority = 'Medium'; // Placeholder
-
-    const getPriorityStyling = (priority: string) => {
-        switch (priority) {
-            case 'High':
-                return 'text-red-400 bg-red-500/10';
-            case 'Medium':
-                return 'text-yellow-400 bg-yellow-500/10';
-            default:
-                return 'text-green-400 bg-green-500/10';
-        }
-    };
-
-    return (
-        <div className="bg-card/50 p-5 rounded-lg border border-border/20 flex items-start justify-between">
-             <div className="flex items-start">
-                <div className="p-2 bg-primary/20 text-primary rounded-full mr-4">
-                    <CheckCircle className="w-6 h-6" />
-                </div>
-                <div>
-                    <h4 className="font-semibold text-lg">{title || category}</h4> {/* Use category as fallback for title */}
-                    <p className="text-muted-foreground">{description}</p>
-                </div>
-            </div>
-            <span className={`ml-4 px-3 py-1 text-sm font-semibold rounded-full whitespace-nowrap ${getPriorityStyling(displayPriority)}`}>
-                {displayPriority} Priority
-            </span>
-        </div>
-    )
-}
+const getCategoryIcon = (category: string) => {
+  const categoryLower = category.toLowerCase();
+  if (categoryLower.includes('cardiovascular') || categoryLower.includes('heart')) {
+    return <Heart className="w-6 h-6" />;
+  } else if (categoryLower.includes('lifestyle')) {
+    return <Activity className="w-6 h-6" />;
+  } else if (categoryLower.includes('dietary') || categoryLower.includes('diet')) {
+    return <Droplet className="w-6 h-6" />;
+  } else if (categoryLower.includes('mental') || categoryLower.includes('brain')) {
+    return <Brain className="w-6 h-6" />;
+  } else if (categoryLower.includes('diabetes')) {
+    return <Zap className="w-6 h-6" />;
+  } else {
+    return <Activity className="w-6 h-6" />;
+  }
+};
 
 export default function DetailedReportPage({ params }: { params: { assessmentId: string } }) {
-  const { user } = useAuth();
-  const { assessmentId } = params; // This is the frontend-generated UUID
+  const { user, loading: authLoading } = useAuth();
+  const { assessmentId } = params;
   const [report, setReport] = useState<ReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  const fetchReport = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/report/${assessmentId}`);
+      if (response.ok) {
+        const { data } = await response.json();
+        setReport(data);
+        setIsGenerating(false);
+        return true;
+      }
+      if (response.status === 404) {
+        return false;
+      }
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      setError(`Failed to load report: ${errorMessage}`);
+      console.error("Error fetching report:", e);
+      return false; // Indicate failure
+    }
+  }, [assessmentId]);
+
+  const handleGenerateReport = useCallback(async () => {
+      if (!user) return;
+      setIsGenerating(true);
+      setError(null);
+      toast.loading('Generating your personalized health report...', { id: 'generating-report' });
+      
+      try {
+          const token = await user.getIdToken();
+          const response = await fetch('/api/insights/generate', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ assessmentId }),
+          });
+
+          if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Failed to start report generation.');
+          }
+
+          // Start polling
+          const interval = setInterval(async () => {
+              const found = await fetchReport();
+              if (found) {
+                  toast.success('Report generated successfully!', { id: 'generating-report' });
+                  clearInterval(interval);
+              }
+          }, 5000); // Poll every 5 seconds
+
+      } catch (e) {
+          const errorMessage = e instanceof Error ? e.message : String(e);
+          setError(`Report generation failed: ${errorMessage}`);
+          toast.error(`Error: ${errorMessage}`, { id: 'generating-report' });
+          setIsGenerating(false);
+      }
+  }, [user, assessmentId, fetchReport]);
 
   useEffect(() => {
-    const fetchReport = async () => {
-      if (!user) {
-        setError('Please log in to view reports.');
-        setIsLoading(false);
+    if (authLoading) return; // Wait for user auth state to be resolved
+    if (!user) {
+        toast.error('You must be logged in to view reports.');
+        router.push('/auth/login');
         return;
-      }
-      try {
-        setIsLoading(true);
-        setError(null);
-        // Fetch report data from your Next.js API route
-        const response = await fetch(`/api/report/${assessmentId}`);
-        
-        if (!response.ok) {
-          if (response.status === 404) {
-            notFound(); // Use Next.js notFound if report not found
-          }
-          const errorData = await response.json();
-          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-        }
-        const data: ReportData = await response.json();
-        setReport(data);
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : String(e);
-        setError(`Failed to load report: ${errorMessage}`);
-        console.error("Error fetching detailed report:", e);
-      } finally {
+    }
+    
+    const initializeReport = async () => {
+      setIsLoading(true);
+      const reportExists = await fetchReport();
+      if (!reportExists) {
+        handleGenerateReport();
+      } else {
         setIsLoading(false);
-      }
+        }
     };
 
-    fetchReport();
-  }, [assessmentId, user]);
+    initializeReport();
+  }, [assessmentId, user, authLoading, fetchReport, handleGenerateReport, router]);
 
-  if (isLoading) {
+  if (isLoading || isGenerating) {
     return (
       <PageLayout>
-        <div className="flex justify-center items-center h-full">
-          <p>Loading report...</p>
-        </div>
+        <div className="flex flex-col justify-center items-center h-full min-h-[50vh]">
+          <Loader2 className="h-16 w-16 animate-spin text-primary" />
+          <p className="mt-4 text-xl text-muted-foreground">
+              {isLoading ? 'Loading your report...' : 'Generating your report, this may take a moment...'}
+          </p>
+                </div>
       </PageLayout>
     );
   }
@@ -171,11 +211,12 @@ export default function DetailedReportPage({ params }: { params: { assessmentId:
     return (
       <PageLayout>
         <div className="text-center py-16 bg-card/80 backdrop-blur-md rounded-xl shadow-lg border-2 border-dashed border-red-500">
+          <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h3 className="text-2xl font-semibold mb-4 text-red-500">Error Loading Report</h3>
           <p className="text-muted-foreground mb-6">{error}</p>
-          <Link href="/report">
+          <Link href="/history">
             <button className="px-6 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold shadow-lg transform hover:scale-105 transition-transform">
-              View All Reports
+              Back to History
             </button>
           </Link>
         </div>
@@ -184,41 +225,62 @@ export default function DetailedReportPage({ params }: { params: { assessmentId:
   }
 
   if (!report) {
+     // This state should ideally be covered by the loading/generating/error states
     return (
       <PageLayout>
         <div className="flex justify-center items-center h-full text-muted-foreground">
-          <p>Report not found.</p>
+          <p>Report not found and generation could not be started.</p>
         </div>
       </PageLayout>
     );
   }
+  
+  const { riskSummary, scorecards } = report.reportData;
 
   return (
     <PageLayout>
       <header className="w-full mb-12">
-        <h2 className="text-4xl font-bold mb-2">Assessment Report Details</h2>
+        <h2 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">Health Assessment Report</h2>
         <p className="text-xl text-muted-foreground">
-          Generated on {new Date(report.date).toLocaleDateString('en-US', { dateStyle: 'full' })}
+          For {report.userId.name} | Generated on {new Date(report.generatedAt).toLocaleDateString('en-US', { dateStyle: 'full' })}
         </p>
       </header>
 
-      {/* Risk Scores Section */}
+      {/* Risk Summary Section */}
       <section className="w-full mb-12">
-        <h3 className="text-3xl font-semibold mb-6 text-center">Your Risk Profile</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <RiskScoreCard icon={<Droplet />} title="Diabetes" {...report.riskScores.diabetes} />
-            <RiskScoreCard icon={<Zap />} title="Hypertension" {...report.riskScores.hypertension} />
-            <RiskScoreCard icon={<Heart />} title="Heart Disease" {...report.riskScores.heartDisease} />
+        <div className="bg-card/80 backdrop-blur-md rounded-xl shadow-lg p-8 border border-border/20">
+          <h3 className="text-2xl font-semibold mb-4 text-center text-primary">Health Risk Summary</h3>
+          <p className="text-muted-foreground leading-relaxed text-lg text-center">{riskSummary}</p>
         </div>
       </section>
 
-      {/* Recommendations Section */}
-      <section className="w-full">
-        <h3 className="text-3xl font-semibold mb-6 text-center">Personalized Recommendations</h3>
-        <div className="max-w-4xl mx-auto space-y-6">
-            {report.recommendations.map((rec) => (
-                <RecommendationItem key={rec.id} title={rec.category} description={rec.advice} category={rec.category} />
+      {/* Risk Scorecards Section */}
+      <section className="w-full mb-12">
+        <h3 className="text-3xl font-semibold mb-6 text-center">Your Risk Profile</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {scorecards.map((scorecard, index) => (
+              <RiskScoreCard 
+                key={index}
+                icon={getCategoryIcon(scorecard.category)}
+                title={scorecard.category}
+                score={scorecard.score}
+                level={scorecard.riskLevel}
+                description={scorecard.details}
+              />
             ))}
+        </div>
+      </section>
+
+      {/* Call to Action */}
+      <section className="w-full text-center">
+        <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-8 border border-purple-500/20">
+          <h3 className="text-2xl font-semibold mb-4">Ready for Personalized Recommendations?</h3>
+          <p className="text-muted-foreground mb-6">Get AI-powered health advice based on your assessment results.</p>
+          <Link href="/recommendations">
+            <button className="px-8 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold shadow-lg transform hover:scale-105 transition-transform">
+              View Recommendations
+            </button>
+          </Link>
         </div>
       </section>
     </PageLayout>

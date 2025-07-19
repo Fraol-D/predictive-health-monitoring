@@ -49,7 +49,9 @@ export default function ReportHistoryPage() {
         setIsLoading(true);
         setError(null);
         // Call Next.js API route to fetch assessments for the current user (firebaseUID)
-        const response = await fetch(`/api/assessment/user/${user.uid}`);
+        const response = await fetch(`/api/assessments/firebase/${user.uid}`);
+        console.log('Report Page fetch response:', { status: response.status, ok: response.ok });
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -131,9 +133,9 @@ export default function ReportHistoryPage() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
-                       <div className={`text-right ${getRiskStyling(assessment.riskScores.overall?.level || assessment.riskScores.diabetes.level)}`}> {/* Use overall if available, else diabetes level as fallback */}
-                          <p className="text-2xl font-bold">{assessment.riskScores.overall?.score || assessment.riskScores.diabetes.score}%</p> {/* Use overall if available, else diabetes score as fallback */}
-                          <p className="text-sm font-semibold">{assessment.riskScores.overall?.level || assessment.riskScores.diabetes.level} Risk</p>
+                      <div className={`text-right ${getRiskStyling(assessment.riskScores.overall?.level || assessment.riskScores.diabetes.level)}`}> {/* Use overall if available, else diabetes level as fallback */}
+                        <p className="text-2xl font-bold">{assessment.riskScores.overall?.score || assessment.riskScores.diabetes.score}%</p> {/* Use overall if available, else diabetes score as fallback */}
+                        <p className="text-sm font-semibold">{assessment.riskScores.overall?.level || assessment.riskScores.diabetes.level} Risk</p>
                         </div>
                        <ChevronRight className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
                      </div>

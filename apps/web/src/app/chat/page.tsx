@@ -61,7 +61,7 @@ const ChatPage = () => {
       if (!response.ok) throw new Error(`Failed to fetch chats: ${response.status}`);
       
       const data: any[] = await response.json();
-      
+
       const fetchedChats: Record<string, ChatSession> = {};
       data.forEach((chat) => {
         fetchedChats[chat.chatId] = {
@@ -376,11 +376,11 @@ const ChatPage = () => {
               <div className="w-full max-w-3xl mt-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {startupPrompts.map((item, index) => (
-                    <Button
+                <Button
                       key={index}
                       variant="outline"
                       className="text-left h-auto py-3 px-4 border-input bg-card/60 hover:bg-card/90 transition-colors duration-200 flex flex-col items-start w-full md:max-w-sm !whitespace-normal"
-                      onClick={() => {
+                     onClick={() => {
                         setInput(item.prompt);
                         textareaRef.current?.focus();
                       }}
@@ -389,10 +389,10 @@ const ChatPage = () => {
                         <p className="font-semibold text-foreground mb-1 break-words whitespace-normal">{item.title}</p>
                         <p className="text-sm text-muted-foreground leading-relaxed break-words whitespace-normal">{item.prompt}</p>
                       </div>
-                    </Button>
+          </Button>
                   ))}
                 </div>
-              </div>
+                   </div>
               </div>
             ) : (
             <>
@@ -420,7 +420,7 @@ const ChatPage = () => {
                   {message.sender === 'user' && (
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-bold">
                       <User className="w-4 h-4" />
-                    </div>
+                </div>
                   )}
             </div>
           ))}

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const mongoose = require('mongoose');
 
 // GET all users
 router.get('/', async (req, res) => {
@@ -35,6 +36,24 @@ router.get('/firebase/:uid', async (req, res) => {
         res.json(user);
     } catch (err) {
         return res.status(500).json({ message: err.message });
+    }
+});
+
+// GET the latest assessment for a user by Firebase UID
+router.get('/firebase/:uid/latest-assessment', async (req, res) => {
+    try {
+        const user = await User.findOne({ firebaseUID: req.params.uid });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const assessment = await mongoose.model('Assessment').findOne({ userId: user._id }).sort({ createdAt: -1 });
+        if (!assessment) {
+            return res.status(404).json({ message: 'No assessments found for this user' });
+        }
+        res.json(assessment);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 });
 

@@ -11,6 +11,9 @@ import { VitalSignsForm } from '@/components/assessment/vital-signs-form';
 import { AssessmentData, AssessmentStep } from '@shared/types/assessment';
 import { useAuth } from '../../providers/auth-provider'; // Import useAuth
 import { v4 as uuidv4 } from 'uuid'; // Import uuid
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
+import { Loader2 } from 'lucide-react';
 
 // Define types for form data and API results
 interface RiskInfo {
@@ -131,9 +134,10 @@ const AssessmentPage = () => {
   const [assessmentData, setAssessmentData] = useState<AssessmentData>(initialAssessmentData);
   const [direction, setDirection] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<RiskResult | null>(null);
   const { user } = useAuth(); // Get the current authenticated user
+  const router = useRouter();
 
   // Ensure userId is set once the user is available
   React.useEffect(() => {
@@ -179,53 +183,129 @@ const AssessmentPage = () => {
 
   const handleAssessmentComplete = async () => {
     if (!user) {
-      setError('User not authenticated. Please log in to complete the assessment.');
+      toast.error('User not authenticated. Please log in.');
       return;
     }
 
     setIsSubmitting(true);
     setError(null);
-    setResult(null);
+    let savedAssessment;
+
+    // Calculate basic risk scores (simplified for now)
+    const calculateRiskScores = (data: AssessmentData) => {
+      const riskScores = {
+        diabetes: { score: 0, level: 'Low' as const, description: 'Low risk based on current data' },
+        heartDisease: { score: 0, level: 'Low' as const, description: 'Low risk based on current data' },
+        hypertension: { score: 0, level: 'Low' as const, description: 'Low risk based on current data' },
+        overall: 0,
+      };
+
+      // Simple risk calculation based on vitals and lifestyle
+      let totalRisk = 0;
+      
+      // Blood pressure risk
+      if (data.vitalSigns.bloodPressure.systolic > 140 || data.vitalSigns.bloodPressure.diastolic > 90) {
+        riskScores.hypertension.score = 70;
+        riskScores.hypertension.level = 'High';
+        riskScores.hypertension.description = 'High blood pressure detected';
+        totalRisk += 30;
+      }
+      
+      // Heart rate risk
+      if (data.vitalSigns.heartRate > 100 || data.vitalSigns.heartRate < 60) {
+        riskScores.heartDisease.score = 40;
+        riskScores.heartDisease.level = 'Medium';
+        riskScores.heartDisease.description = 'Irregular heart rate detected';
+        totalRisk += 20;
+      }
+      
+      // Lifestyle risk factors
+      if (data.lifestyle.smokingStatus === 'current') {
+        totalRisk += 25;
+      }
+      if (data.lifestyle.alcoholConsumption === 'heavy') {
+        totalRisk += 15;
+      }
+      if (data.lifestyle.physicalActivityFrequency === 'never') {
+        totalRisk += 20;
+      }
+      
+      riskScores.overall = Math.min(totalRisk, 100);
+      
+      return riskScores;
+    };
 
     const finalData = {
+      firebaseUID: user.uid, // Pass firebaseUID for backend processing
+      assessmentId: assessmentData.id,
+      fullAssessmentData: {
       ...assessmentData,
-      userId: user.uid, // Ensure the latest Firebase UID is used
-      assessmentId: assessmentData.id, // Use the generated UUID as assessmentId
       status: 'completed' as const,
       timestamp: new Date().toISOString(),
+      },
+      riskScores: calculateRiskScores(assessmentData),
     };
-    setAssessmentData(finalData);
 
     try {
+      // Step 1: Save the assessment
       const response = await fetch('/api/assessment', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(finalData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        throw new Error(errorData.details || 'Failed to save assessment.');
       }
 
-      const resultData: RiskResult = await response.json();
-      setResult(resultData);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
+      savedAssessment = await response.json();
+      toast.success('Assessment submitted successfully!');
+
+      // Step 2: Trigger AI insight generation
+      setIsSubmitting(false); // Done with initial submission
+      setIsGenerating(true);  // Now generating insights
+      toast.loading('Generating your personalized health report...');
+      
+      const insightsResponse = await fetch('/api/insights/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assessmentId: savedAssessment._id, firebaseUID: user.uid }),
+      });
+
+      toast.dismiss(); // Dismiss loading toast
+
+      if (!insightsResponse.ok) {
+        const errorData = await insightsResponse.json();
+        throw new Error(errorData.error || 'Failed to generate insights.');
+      }
+      
+      toast.success('Report generated successfully! Redirecting...');
+      router.push(`/report`); // Redirect to the main reports list page
+
+    } catch (err: any) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
       setError(errorMessage);
-      console.error('Assessment submission failed:', e);
+      toast.error(errorMessage);
+      console.error('Assessment process failed:', err);
     } finally {
       setIsSubmitting(false);
-    // Trigger the completion view
-      setDirection(1);
-    setCurrentStep(assessmentSteps.length);
+      setIsGenerating(false);
     }
   };
 
   const renderCurrentStepComponent = () => {
     const stepConfig = assessmentSteps[currentStep];
+    if (isSubmitting || isGenerating) {
+        return (
+          <div className="flex flex-col items-center justify-center h-full min-h-[300px]">
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+            <p className="mt-4 text-lg text-muted-foreground">
+              {isSubmitting ? 'Submitting your assessment...' : 'Generating your personalized health report...'}
+            </p>
+          </div>
+        );
+    }
     if (!stepConfig) return <p>Step not found.</p>; // Should not happen
 
     switch (stepConfig.component) {
@@ -270,110 +350,28 @@ const AssessmentPage = () => {
     }
   };
 
-  // Completion View (if currentStep goes beyond actual data forms)
-  if (currentStep >= assessmentSteps.length) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
-        <div className="w-full max-w-2xl text-center bg-card/80 backdrop-blur-md p-8 md:p-12 rounded-xl shadow-2xl">
-          {isSubmitting && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center">
-              <div className="w-16 h-16 border-4 border-t-4 border-t-purple-500 border-gray-600 rounded-full animate-spin mb-4"></div>
-              <p className="text-xl font-semibold">Analyzing your data...</p>
-              <p className="text-muted-foreground">This may take a moment.</p>
-            </motion.div>
-          )}
-
-          {error && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <h3 className="text-2xl font-bold text-red-500 mb-4">An Error Occurred</h3>
-              <p className="text-muted-foreground mb-6 bg-red-900/50 p-4 rounded-lg">{error}</p>
-              <button onClick={() => setCurrentStep(assessmentSteps.length - 1)} className="px-6 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 transition-colors">
-                Go Back
-              </button>
-            </motion.div>
-          )}
-
-          {result && (
-            <motion.div
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            >
-                <div className="mb-8">
-                <svg className="w-24 h-24 text-green-500 dark:text-green-400 mx-auto" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                </div>
-                <h3 className="text-3xl font-bold mb-4">Assessment Complete!</h3>
-                <p className="text-muted-foreground mb-6">Here are your initial risk scores. A detailed report is available on your dashboard.</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 text-center">
-                  <div className="bg-background/50 p-4 rounded-lg">
-                    <h4 className="text-lg font-semibold text-purple-400">Diabetes</h4>
-                    <p className="text-3xl font-bold">{result.diabetes?.score ?? 'N/A'}%</p>
-                    <p className="text-sm text-muted-foreground">{result.diabetes?.level ?? ''}</p>
-                  </div>
-                  <div className="bg-background/50 p-4 rounded-lg">
-                    <h4 className="text-lg font-semibold text-pink-400">Hypertension</h4>
-                    <p className="text-3xl font-bold">{result.hypertension?.score ?? 'N/A'}%</p>
-                    <p className="text-sm text-muted-foreground">{result.hypertension?.level ?? ''}</p>
-                  </div>
-                  <div className="bg-background/50 p-4 rounded-lg">
-                    <h4 className="text-lg font-semibold text-teal-400">Heart Disease</h4>
-                    <p className="text-3xl font-bold">{result.heartDisease?.score ?? 'N/A'}%</p>
-                    <p className="text-sm text-muted-foreground">{result.heartDisease?.level ?? ''}</p>
-                  </div>
-                </div>
-                <Link href="/">
-                  <button className="px-8 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold shadow-lg transform hover:scale-105 transition-transform">
-                    Back to Dashboard
-                    </button>
-                </Link>
-            </motion.div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col items-center justify-center p-4 md:p-8">
-      <div className="w-full max-w-2xl">
-        <motion.header 
-          initial={{opacity: 0, y: -30}}
-          animate={{opacity: 1, y: 0}}
-          transition={{duration: 0.5}}
-          className="mb-8 text-center relative"
-        >
-            <Link href="/" className="text-sm text-purple-400 hover:text-purple-300 absolute top-0 left-0 p-2 md:top-1 md:left-1">
-              &larr; Quit Assessment
-            </Link>
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500 pt-10 md:pt-8">
-            Health Risk Assessment
-          </h1>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
+      <div className="w-full max-w-4xl">
           <AssessmentStepper 
             steps={assessmentSteps}
             currentStep={currentStep}
             onStepClick={handleStepClick} 
           />
-          {/* Progress bar and step title can be part of AssessmentStepper or here */}
-          <p className="text-muted-foreground text-md">{assessmentSteps[currentStep]?.description}</p>
-        </motion.header>
-
-        <main className="p-6 md:p-8 bg-card/50 backdrop-blur-lg rounded-xl shadow-2xl min-h-[450px] relative overflow-hidden border border-border/50">
-          <AnimatePresence initial={false} custom={direction} mode="wait">
+        <div className="mt-8 bg-card/50 backdrop-blur-sm p-6 md:p-10 rounded-xl shadow-lg border border-border/20">
+          <AnimatePresence mode="wait" custom={direction}>
             <motion.div
-              key={currentStep} // Ensure this key changes to trigger AnimatePresence
+              key={currentStep}
               custom={direction}
               variants={stepVariants}
               initial="initial"
               animate="animate"
               exit="exit"
-              className="absolute top-0 left-0 right-0 bottom-0 p-3 md:p-6 overflow-y-auto scrollbar-thin"
             >
               {renderCurrentStepComponent()} 
             </motion.div>
           </AnimatePresence>
-        </main>
+        </div>
       </div>
     </div>
   );
