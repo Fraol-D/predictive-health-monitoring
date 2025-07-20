@@ -31,7 +31,9 @@ const recommendationsRouter = require("./routes/recommendations");
 const sharingRouter = require("./routes/sharing");
 const notificationsRouter = require("./routes/notifications");
 const reportsRouter = require("./routes/reports");
+
 const insightsRouter = require("./routes/insights");
+const phoneVerificationRouter = require("./routes/phoneVerification");
 
 app.use("/api/users", usersRouter);
 app.use("/api/assessments", assessmentsRouter);
@@ -40,7 +42,9 @@ app.use("/api/recommendations", recommendationsRouter);
 app.use("/api/sharing", sharingRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/reports", reportsRouter);
+
 app.use("/api/insights", insightsRouter);
+app.use("/api/phone-verification", phoneVerificationRouter);
 
 // Simple route for testing
 app.get("/", (req, res) => {
