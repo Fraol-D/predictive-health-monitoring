@@ -8,10 +8,6 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   sendEmailVerification,
-  PhoneAuthProvider,
-  RecaptchaVerifier,
-  multiFactor,
-  PhoneMultiFactorGenerator,
   User as FirebaseUser,
   GoogleAuthProvider,
   signInWithPopup,
@@ -30,12 +26,20 @@ const SignupPage = () => {
   const [displayName, setDisplayName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
-  const [verificationId, setVerificationId] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [resendTimer, setResendTimer] = useState(0);
   const router = useRouter();
+
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => setResendTimer((t) => t - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendTimer]);
 
   useEffect(() => {
     if (uiState === 'register') {
@@ -156,63 +160,52 @@ const SignupPage = () => {
   const handlePhoneVerificationRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-        setError('User session lost. Please log in again.');
-        return;
+      setError('User session lost. Please log in again.');
+      return;
     }
     setLoading(true);
     setError('');
     setMessage('');
-
     try {
-        const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container-signup', {
-            'size': 'invisible',
-        });
-        
-        const multiFactorSession = await multiFactor(user).getSession();
-        const phoneInfoOptions = {
-            phoneNumber,
-            session: multiFactorSession
-        };
-
-        const phoneAuthProvider = new PhoneAuthProvider(auth);
-        const newVerificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, recaptchaVerifier);
-        
-        setVerificationId(newVerificationId);
-        setMessage('Verification code sent to your phone.');
+      const res = await fetch('/api/phone-verification/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber }),
+      });
+      if (!res.ok) throw new Error('Failed to send verification code');
+      setCodeSent(true);
+      setMessage('Verification code sent to your phone.');
+      setResendTimer(15);
     } catch (err: any) {
-        console.error('Phone verification sending error:', err);
-        setError('Failed to send verification code. Please check your phone number and try again.');
+      setError('Failed to send verification code. Please check your phone number and try again.');
+      console.error('Phone verification sending error:', err);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
   const handleMfaEnrollmentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !verificationId) {
-        setError('Verification session is invalid. Please try again.');
-        return;
+    if (!user) {
+      setError('User session lost. Please log in again.');
+      return;
     }
     setLoading(true);
     setError('');
-
     try {
-        const phoneCredential = PhoneAuthProvider.credential(verificationId, verificationCode);
-        const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(phoneCredential);
-        await multiFactor(user).enroll(multiFactorAssertion, displayName);
-
-        setMessage('Account created and verified successfully!');
-        setTimeout(() => router.push('/'), 2000);
-
+      const res = await fetch('/api/phone-verification/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber, code: verificationCode }),
+      });
+      if (!res.ok) throw new Error('Invalid verification code');
+      setMessage('Account created and verified successfully!');
+      setTimeout(() => router.push('/'), 2000);
     } catch (err: any) {
-        let errorMessage = 'An unexpected error occurred during MFA setup.';
-        if (err.code === 'auth/invalid-verification-code') {
-            errorMessage = 'The verification code is invalid. Please try again.';
-        }
-        console.error('MFA Enrollment error:', err);
-        setError(errorMessage);
+      setError('The verification code is invalid. Please try again.');
+      console.error('MFA Enrollment error:', err);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -311,35 +304,62 @@ const SignupPage = () => {
             )}
 
             {uiState === 'verifyPhone' && (
-                <div>
-                    <form onSubmit={handlePhoneVerificationRequest} className="space-y-4 mb-4">
-                        <div>
-                            <label htmlFor="phone" className="block text-sm font-medium text-muted-foreground mb-2">Phone Number</label>
-                            <div className="relative">
-                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                <input type="tel" name="phone" id="phone" required value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-background/50 border border-border rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary" placeholder="+1 650 555 1234" />
-                            </div>
+              <div>
+                <form onSubmit={handlePhoneVerificationRequest} className="space-y-4 mb-4">
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-muted-foreground mb-2">Phone Number</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <input type="tel" name="phone" id="phone" required value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-background/50 border border-border rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary" placeholder="+1 650 555 1234" />
+                    </div>
+                  </div>
+                  <button type="submit" disabled={loading || codeSent} className="w-full px-6 py-3 rounded-lg text-white font-semibold shadow-lg transform hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-opacity-50 disabled:opacity-70 disabled:cursor-not-allowed bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 focus:ring-cyan-500">
+                    {loading ? 'Sending Code...' : 'Send Verification Code'}
+                  </button>
+                </form>
+                {codeSent && (
+                  <>
+                    <form onSubmit={handleMfaEnrollmentSubmit} className="space-y-4 border-t border-border pt-4 mt-4">
+                      <div>
+                        <label htmlFor="verificationCode" className="block text-sm font-medium text-muted-foreground mb-2">Verification Code</label>
+                        <div className="relative">
+                          <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                          <input type="text" name="verificationCode" id="verificationCode" required value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-background/50 border border-border rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary" placeholder="123456" />
                         </div>
-                        <button type="submit" disabled={loading || !!verificationId} className="w-full px-6 py-3 rounded-lg text-white font-semibold shadow-lg transform hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-opacity-50 disabled:opacity-70 disabled:cursor-not-allowed bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 focus:ring-cyan-500">
-                            {loading ? 'Sending Code...' : 'Send Verification Code'}
-                        </button>
+                      </div>
+                      <button type="submit" disabled={loading} className="w-full px-6 py-3 rounded-lg text-white font-semibold shadow-lg transform hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-opacity-50 disabled:opacity-70 disabled:cursor-not-allowed bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 focus:ring-teal-500">
+                        {loading ? 'Verifying...' : 'Verify & Complete Sign Up'}
+                      </button>
                     </form>
-                    
-                    {verificationId && (
-                        <form onSubmit={handleMfaEnrollmentSubmit} className="space-y-4 border-t border-border pt-4 mt-4">
-                            <div>
-                                <label htmlFor="verificationCode" className="block text-sm font-medium text-muted-foreground mb-2">Verification Code</label>
-                                <div className="relative">
-                                    <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <input type="text" name="verificationCode" id="verificationCode" required value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-background/50 border border-border rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary" placeholder="123456" />
-                                </div>
-                            </div>
-                            <button type="submit" disabled={loading} className="w-full px-6 py-3 rounded-lg text-white font-semibold shadow-lg transform hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-opacity-50 disabled:opacity-70 disabled:cursor-not-allowed bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 focus:ring-teal-500">
-                                {loading ? 'Verifying...' : 'Verify & Complete Sign Up'}
-                            </button>
-                        </form>
-                    )}
-                </div>
+                    <button
+                      type="button"
+                      disabled={loading || resendTimer > 0}
+                      className="w-full mt-2 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transform hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-opacity-50 disabled:opacity-70 disabled:cursor-not-allowed bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 focus:ring-cyan-500"
+                      onClick={async () => {
+                        setLoading(true);
+                        setError('');
+                        setMessage('');
+                        try {
+                          const res = await fetch('/api/phone-verification/resend', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ phoneNumber }),
+                          });
+                          if (!res.ok) throw new Error('Failed to resend verification code');
+                          setMessage('A new verification code has been sent to your phone.');
+                          setResendTimer(15);
+                        } catch (err) {
+                          setError('Failed to resend verification code. Please try again.');
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                    >
+                      {loading ? 'Resending...' : resendTimer > 0 ? `Resend Code (${resendTimer})` : 'Resend Code'}
+                    </button>
+                  </>
+                )}
+              </div>
             )}
 
             <p className="text-center text-sm text-muted-foreground mt-8">
