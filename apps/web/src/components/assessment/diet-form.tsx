@@ -67,8 +67,11 @@ export const DietForm: React.FC<DietFormProps> = ({ data, onChange, onNext, onBa
             min="0"
             step="0.1"
             className="w-full p-3 rounded-lg border bg-background text-foreground border-border focus:ring-2 focus:ring-primary/50 focus:border-primary"
-            value={data.waterIntakeLiters}
-            onChange={(e) => handleChange('waterIntakeLiters', parseFloat(e.target.value))}
+            value={isNaN(data.waterIntakeLiters) ? '' : String(data.waterIntakeLiters)}
+            onChange={(e) => {
+              const value = e.target.value;
+              handleChange('waterIntakeLiters', value === '' ? 0 : parseFloat(value));
+            }}
           />
         </div>
 

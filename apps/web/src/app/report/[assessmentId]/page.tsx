@@ -139,18 +139,28 @@ export default function DetailedReportPage({ params }: { params: { assessmentId:
       setIsGenerating(true);
       setError(null);
       toast.loading('Generating your personalized health report...', { id: 'generating-report' });
-      
+
       try {
+          // Ensure token is present and valid
           const token = await user.getIdToken();
+          console.log('[DEBUG] Firebase ID token:', token);
+          if (!token) {
+              throw new Error('No authentication token found. Please log in again.');
+          }
+          const headers = {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+          };
+          console.log('[DEBUG] Request headers:', headers);
           const response = await fetch('/api/insights/generate', {
               method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`
-              },
+              headers,
               body: JSON.stringify({ assessmentId }),
           });
 
+          if (response.status === 401) {
+              throw new Error('Unauthorized. Please log in again.');
+          }
           if (!response.ok) {
               const errorData = await response.json();
               throw new Error(errorData.error || 'Failed to start report generation.');
@@ -225,7 +235,7 @@ export default function DetailedReportPage({ params }: { params: { assessmentId:
   }
 
   if (!report) {
-     // This state should ideally be covered by the loading/generating/error states
+    // This state should ideally be covered by the loading/generating/error states
     return (
       <PageLayout>
         <div className="flex justify-center items-center h-full text-muted-foreground">
@@ -234,7 +244,17 @@ export default function DetailedReportPage({ params }: { params: { assessmentId:
       </PageLayout>
     );
   }
-  
+
+  if (!report.reportData) {
+    return (
+      <PageLayout>
+        <div className="flex justify-center items-center h-full text-muted-foreground">
+          <p>Report data is missing or incomplete.</p>
+        </div>
+      </PageLayout>
+    );
+  }
+
   const { riskSummary, scorecards } = report.reportData;
 
   return (

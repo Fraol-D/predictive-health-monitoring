@@ -5,6 +5,13 @@ const BACKEND_API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'ht
 
 export async function POST(request: Request) {
     console.log('Starting /api/insights/generate POST request');
+<<<<<<< HEAD
+=======
+    // Log all incoming headers for debugging
+    const headersObj: Record<string, string> = {};
+    request.headers.forEach((value, key) => { headersObj[key] = value; });
+    console.log('[DEBUG] Incoming headers:', headersObj);
+>>>>>>> neba-main
     const body = await request.json();
     console.log('Received request body:', body);
     const { assessmentId } = body;
@@ -28,8 +35,16 @@ export async function POST(request: Request) {
         console.log('Fetching backend at:', `${BACKEND_API_BASE_URL}/insights/generate`);
         const backendRes = await fetch(`${BACKEND_API_BASE_URL}/insights/generate`, {
             method: 'POST',
+<<<<<<< HEAD
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ assessmentId, firebaseUID }),
+=======
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ assessmentId }),
+>>>>>>> neba-main
         });
         console.log('Backend response status:', backendRes.status);
 
@@ -43,7 +58,15 @@ export async function POST(request: Request) {
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+<<<<<<< HEAD
         console.error('Error in insights generate proxy:', error.stack || error);
+=======
+        if (error instanceof Error) {
+            console.error('Error in insights generate proxy:', error.stack || error);
+        } else {
+            console.error('Error in insights generate proxy:', error);
+        }
+>>>>>>> neba-main
         if (errorMessage.includes('auth/id-token-expired')) {
             return NextResponse.json({ error: 'Authentication token expired. Please log in again.' }, { status: 401 });
         }

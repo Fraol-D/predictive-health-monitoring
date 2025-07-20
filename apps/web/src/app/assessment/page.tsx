@@ -193,34 +193,42 @@ const AssessmentPage = () => {
 
     // Calculate basic risk scores (simplified for now)
     const calculateRiskScores = (data: AssessmentData) => {
-      const riskScores = {
-        diabetes: { score: 0, level: 'Low' as const, description: 'Low risk based on current data' },
-        heartDisease: { score: 0, level: 'Low' as const, description: 'Low risk based on current data' },
-        hypertension: { score: 0, level: 'Low' as const, description: 'Low risk based on current data' },
-        overall: 0,
+      const riskScores: RiskResult = {
+        diabetes: { score: 0, level: 'Low', description: 'Low risk based on current data' },
+        heartDisease: { score: 0, level: 'Low', description: 'Low risk based on current data' },
+        hypertension: { score: 0, level: 'Low', description: 'Low risk based on current data' },
       };
 
       // Simple risk calculation based on vitals and lifestyle
       let totalRisk = 0;
       
       // Blood pressure risk
-      if (data.vitalSigns.bloodPressure.systolic > 140 || data.vitalSigns.bloodPressure.diastolic > 90) {
+      if (
+        data.vitalSigns.bloodPressure &&
+        (data.vitalSigns.bloodPressure.systolic > 140 || data.vitalSigns.bloodPressure.diastolic > 90)
+      ) {
         riskScores.hypertension.score = 70;
         riskScores.hypertension.level = 'High';
         riskScores.hypertension.description = 'High blood pressure detected';
         totalRisk += 30;
       }
-      
+
       // Heart rate risk
-      if (data.vitalSigns.heartRate > 100 || data.vitalSigns.heartRate < 60) {
+      if (
+        typeof data.vitalSigns.heartRate === 'number' &&
+        (data.vitalSigns.heartRate > 100 || data.vitalSigns.heartRate < 60)
+      ) {
         riskScores.heartDisease.score = 40;
         riskScores.heartDisease.level = 'Medium';
         riskScores.heartDisease.description = 'Irregular heart rate detected';
         totalRisk += 20;
       }
-      
+
       // Lifestyle risk factors
-      if (data.lifestyle.smokingStatus === 'current') {
+      if (
+        data.lifestyle.smokingStatus === 'current_light' ||
+        data.lifestyle.smokingStatus === 'current_heavy'
+      ) {
         totalRisk += 25;
       }
       if (data.lifestyle.alcoholConsumption === 'heavy') {
@@ -229,10 +237,9 @@ const AssessmentPage = () => {
       if (data.lifestyle.physicalActivityFrequency === 'never') {
         totalRisk += 20;
       }
-      
-      riskScores.overall = Math.min(totalRisk, 100);
-      
-      return riskScores;
+
+      const overall = Math.min(totalRisk, 100);
+      return { ...riskScores, overall };
     };
 
     const finalData = {
@@ -247,10 +254,15 @@ const AssessmentPage = () => {
     };
 
     try {
+      // Get Firebase ID token
+      const token = await user.getIdToken();
       // Step 1: Save the assessment
       const response = await fetch('/api/assessment', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(finalData),
       });
 
@@ -269,7 +281,10 @@ const AssessmentPage = () => {
       
       const insightsResponse = await fetch('/api/insights/generate', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({ assessmentId: savedAssessment._id, firebaseUID: user.uid }),
       });
 
