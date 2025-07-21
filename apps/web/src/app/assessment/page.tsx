@@ -296,7 +296,7 @@ const AssessmentPage = () => {
       }
       
       toast.success('Report generated successfully! Redirecting...');
-      router.push(`/report`); // Redirect to the main reports list page
+      router.push(`/report/${savedAssessment.assessmentId}`); // Redirect to the detailed report page
 
     } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : String(err);

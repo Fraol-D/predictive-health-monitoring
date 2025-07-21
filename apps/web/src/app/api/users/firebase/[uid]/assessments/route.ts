@@ -4,20 +4,20 @@ const BACKEND_API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'ht
 
 export async function GET(
     request: Request,
-    { params }: { params: { assessmentId: string } }
+    { params }: { params: { uid: string } }
 ) {
     try {
-        const assessmentId = params.assessmentId;
+        const uid = params.uid;
 
-        if (!assessmentId) {
-            return NextResponse.json({ error: 'Missing Assessment ID.' }, { status: 400 });
+        if (!uid) {
+            return NextResponse.json({ error: 'Missing Firebase UID.' }, { status: 400 });
         }
 
-        const backendRes = await fetch(`${BACKEND_API_BASE_URL}/reports/${assessmentId}`);
+        const backendRes = await fetch(`${BACKEND_API_BASE_URL}/users/firebase/${uid}/assessments`);
 
         if (!backendRes.ok) {
             const errorBody = await backendRes.json();
-            return NextResponse.json({ error: errorBody.message || 'Failed to fetch report' }, { status: backendRes.status });
+            return NextResponse.json({ error: errorBody.message || 'Failed to fetch assessments' }, { status: backendRes.status });
         }
 
         const data = await backendRes.json();

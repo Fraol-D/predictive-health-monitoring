@@ -1,4 +1,4 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // Initialize the Google Generative AI client with the API key from environment variables
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -16,12 +16,14 @@ async function generateInsights(assessmentData, chatHistory) {
 
   if (!process.env.GEMINI_API_KEY) {
     console.error("❌ GEMINI_API_KEY is not set in environment variables");
-    throw new Error('GEMINI_API_KEY is not configured');
+    throw new Error("GEMINI_API_KEY is not configured");
   }
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-  const chatMessages = chatHistory.map(chat => `User: ${chat.userMessage}\nAI: ${chat.aiMessage}`).join('\n');
+  const chatMessages = chatHistory
+    .map((chat) => `User: ${chat.userMessage}\nAI: ${chat.aiMessage}`)
+    .join("\n");
   console.log("💬 Formatted chat messages length:", chatMessages.length);
 
   const prompt = `
@@ -49,17 +51,20 @@ Example format:
     console.log("🔍 Calling Gemini API...");
     const result = await model.generateContent(prompt);
     console.log("✅ Gemini API call completed");
-    
+
     const response = await result.response;
     const text = response.text();
     console.log("📄 Raw response length:", text.length);
     console.log("📄 Raw response preview:", text.substring(0, 200) + "...");
-    
+
     // Clean the text to ensure it is valid JSON
-    const cleanedText = text.replace(/^```json\s*|```\s*$/g, '').trim();
+    const cleanedText = text.replace(/^```json\s*|```\s*$/g, "").trim();
     console.log("🧹 Cleaned text length:", cleanedText.length);
-    console.log("🧹 Cleaned text preview:", cleanedText.substring(0, 200) + "...");
-    
+    console.log(
+      "🧹 Cleaned text preview:",
+      cleanedText.substring(0, 200) + "..."
+    );
+
     console.log("🔍 Parsing JSON response...");
     const parsedJson = JSON.parse(cleanedText);
     console.log("✅ JSON parsed successfully");
@@ -69,19 +74,21 @@ Example format:
       recommendationCount: parsedJson.recommendations?.length || 0,
       reportKeys: parsedJson.report ? Object.keys(parsedJson.report) : [],
     });
-    
+
     return parsedJson;
   } catch (error) {
-    console.error('❌ Error generating insights from Gemini:', error);
-    console.error('❌ Error type:', error.constructor.name);
-    console.error('❌ Error message:', error.message);
+    console.error("❌ Error generating insights from Gemini:", error);
+    console.error("❌ Error type:", error.constructor.name);
+    console.error("❌ Error message:", error.message);
     if (error.stack) {
-      console.error('❌ Error stack:', error.stack);
+      console.error("❌ Error stack:", error.stack);
     }
-    throw new Error('Failed to generate insights from AI model: ' + error.message);
+    throw new Error(
+      "Failed to generate insights from AI model: " + error.message
+    );
   }
 }
 
 module.exports = {
   generateInsights,
-}; 
+};
